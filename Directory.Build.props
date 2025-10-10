@@ -1,0 +1,13 @@
+<Project>
+	<PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <LangVersion>13.0</LangVersion>
+		<AccelerateBuildsInVisualStudio>True</AccelerateBuildsInVisualStudio>
+		<AnalysisMode>Recommended</AnalysisMode>
+        <Nullable>enable</Nullable>
+        <WarningsAsErrors>Nullable</WarningsAsErrors>
+        <TreatWarningsAsErrors Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</TreatWarningsAsErrors>
+        <EnforceCodeStyleInBuild Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</EnforceCodeStyleInBuild>
+        <Deterministic Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</Deterministic>
+	</PropertyGroup>
+</Project>

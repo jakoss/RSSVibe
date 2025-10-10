@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/RSSVibe.ApiService/RSSVibe.ApiService.csproj" />
+  <Project Path="src/RSSVibe.AppHost/RSSVibe.AppHost.csproj" />
+  <Project Path="src/RSSVibe.ServiceDefaults/RSSVibe.ServiceDefaults.csproj" />
+  <Project Path="src/RSSVibe.Web/RSSVibe.Web.csproj" />
+</Solution>
