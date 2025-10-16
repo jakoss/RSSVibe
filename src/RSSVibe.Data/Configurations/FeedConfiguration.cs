@@ -23,13 +23,6 @@ internal sealed class FeedConfiguration : IEntityTypeConfiguration<Feed>
 
         builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
 
-        // Check constraints
-        builder.ToTable(tb =>
-        {
-            tb.HasCheckConstraint("CK_feed_update_interval_value", "update_interval_value >= 1");
-            tb.HasCheckConstraint("CK_feed_ttl_minutes", "ttl_minutes >= 15");
-        });
-
         // Indexes
         builder.HasIndex(x => new { x.UserId, x.NormalizedSourceUrl }).IsUnique();
         builder.HasIndex(x => new { x.NextParseAfter, x.LastParseStatus });

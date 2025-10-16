@@ -296,12 +296,7 @@ namespace RSSVibe.Data.Migrations
                     b.HasIndex("UserId", "NormalizedSourceUrl")
                         .IsUnique();
 
-                    b.ToTable("Feeds", t =>
-                        {
-                            t.HasCheckConstraint("CK_feed_ttl_minutes", "ttl_minutes >= 15");
-
-                            t.HasCheckConstraint("CK_feed_update_interval_value", "update_interval_value >= 1");
-                        });
+                    b.ToTable("Feeds");
                 });
 
             modelBuilder.Entity("RSSVibe.Data.Entities.FeedAnalysis", b =>
@@ -498,7 +493,7 @@ namespace RSSVibe.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Status")
-                        .HasFilter("status = 'failed'");
+                        .HasFilter("\"Status\" = 'failed'");
 
                     b.HasIndex("FeedId", "StartedAt")
                         .IsDescending(false, true);

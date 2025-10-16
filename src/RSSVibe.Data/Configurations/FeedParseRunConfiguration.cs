@@ -24,7 +24,7 @@ internal sealed class FeedParseRunConfiguration : IEntityTypeConfiguration<FeedP
 
         // Indexes
         builder.HasIndex(x => new { x.FeedId, x.StartedAt }).IsDescending(false, true);
-        builder.HasIndex(x => x.Status).HasFilter("status = 'failed'");
+        builder.HasIndex(x => x.Status).HasFilter($"\"{nameof(FeedParseRun.Status)}\" = 'failed'");
 
         // Relationships
         builder.HasOne(x => x.Feed)

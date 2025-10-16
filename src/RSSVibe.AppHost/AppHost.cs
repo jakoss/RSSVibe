@@ -7,14 +7,23 @@ var postgresServer = builder.AddPostgres("postgres", postgresUsername, postgresP
     .WithDataVolume("rssvibe-postgres-data")
     .WithImageTag("18")
     .WithLifetime(ContainerLifetime.Persistent)
-    .WithDbGate();
+    .WithDbGate(configureContainer: resourceBuilder =>
+    {
+        resourceBuilder.WithLifetime(ContainerLifetime.Persistent);
+    }, "rssvibe-dbgate");
 
 var rssvibeDb = postgresServer.AddDatabase("rssvibe-db");
+
+var migrationService = builder.AddProject<Projects.RSSVibe_MigrationService>("migrationservice")
+    .WithReference(rssvibeDb)
+    .WaitFor(rssvibeDb);
 
 var apiService = builder.AddProject<Projects.RSSVibe_ApiService>("apiservice")
     .WithHttpHealthCheck("/health")
     .WithReference(rssvibeDb)
-    .WaitFor(rssvibeDb);
+    .WaitFor(rssvibeDb)
+    .WithReference(migrationService)
+    .WaitForCompletion(migrationService);
 
 builder.AddProject<Projects.RSSVibe_Web>("webfrontend")
     .WithExternalHttpEndpoints()

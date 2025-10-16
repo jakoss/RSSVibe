@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\RSSVibe.ApiService\RSSVibe.ApiService.csproj" />
+    <ProjectReference Include="..\RSSVibe.MigrationService\RSSVibe.MigrationService.csproj" />
     <ProjectReference Include="..\RSSVibe.Web\RSSVibe.Web.csproj" />
   </ItemGroup>
   <ItemGroup>

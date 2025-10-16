@@ -218,8 +218,6 @@ namespace RSSVibe.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Feeds", x => x.Id);
-                    table.CheckConstraint("CK_feed_ttl_minutes", "ttl_minutes >= 15");
-                    table.CheckConstraint("CK_feed_update_interval_value", "update_interval_value >= 1");
                     table.ForeignKey(
                         name: "FK_Feeds_AspNetUsers_UserId",
                         column: x => x.UserId,
@@ -436,7 +434,7 @@ namespace RSSVibe.Data.Migrations
                 name: "IX_FeedParseRuns_Status",
                 table: "FeedParseRuns",
                 column: "Status",
-                filter: "status = 'failed'");
+                filter: "\"Status\" = 'failed'");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Feeds_AnalysisId",
