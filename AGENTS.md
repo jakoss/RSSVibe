@@ -1,108 +1,240 @@
-# AI Rules for RSSVibe
+# AI Agent Instructions for RSSVibe
 
-RSSVibe is a project that aims to provide a seamless and personalized news aggregation experience for users. The platform leverages advanced AI algorithms to curate and deliver relevant content from various sources, ensuring users stay informed about the topics that matter most to them.
+**Project Context**: RSSVibe is a news aggregation platform that provides personalized content curation using AI algorithms to help users stay informed about topics that matter to them.
 
-## CODING_PRACTICES
+---
 
-### Guidelines for SUPPORT_LEVEL
+## GENERAL CODING PRINCIPLES
 
-#### SUPPORT_EXPERT
+**Support Level: EXPERT** - Assume advanced knowledge of language idioms and design patterns.
 
-- Favor elegant, maintainable solutions over verbose code. Assume understanding of language idioms and design patterns.
-- Highlight potential performance implications and optimization opportunities in suggested code.
-- Frame solutions within broader architectural contexts and suggest design alternatives when appropriate.
-- Focus comments on 'why' not 'what' - assume code readability through well-named functions and variables.
-- Proactively address edge cases, race conditions, and security considerations without being prompted.
-- When debugging, provide targeted diagnostic approaches rather than shotgun solutions.
-- Suggest comprehensive testing strategies rather than just example tests, including considerations for mocking, test organization, and coverage.
+- MUST favor elegant, maintainable solutions over verbose code
+- MUST proactively address edge cases, race conditions, and security considerations
+- MUST focus comments on 'why' not 'what' (code should be self-documenting)
+- SHOULD highlight performance implications and optimization opportunities
+- SHOULD frame solutions within broader architectural contexts
+- SHOULD provide targeted diagnostic approaches when debugging (not shotgun solutions)
+- SHOULD suggest comprehensive testing strategies including mocking, organization, and coverage
 
+---
 
-### Guidelines for VERSION_CONTROL
+## GIT & VERSION CONTROL
 
-#### GIT
+**Branch Naming**: `feature/{short-description}` or `bugfix/{short-description}`
 
-- Use conventional commits to create meaningful commit messages
-- Use feature branches with descriptive names following feataure/{short-description} or bugfix/{short-description} conventions
-- Write meaningful commit messages that explain why changes were made, not just what
-- Keep commits focused on single logical changes to facilitate code review and bisection
+- MUST use conventional commits for all commit messages
+- MUST write commit messages explaining WHY changes were made, not just what
+- MUST keep commits focused on single logical changes for easier review and bisection
+- Example: `feat: add user preference caching to improve feed load times`
 
-### Guidelines for ARCHITECTURE
+---
 
-#### ADR
+## ARCHITECTURE DECISION RECORDS (ADR)
 
-- Create ADRs in /docs/adr/{name}.md for:
-- 1) Major dependency changes
-- 2) Architectural pattern changes
-- 3) New integration patterns
-- 4) Database schema changes
+**Location**: `/docs/adr/{name}.md`
 
-## BACKEND
+MUST create ADRs for:
+1. Major dependency changes
+2. Architectural pattern changes
+3. New integration patterns
+4. Database schema changes
 
-### Guidelines for DOTNET
+---
 
-#### CODING STYLE
-- Language: C# 13 on .NET SDK `9.x` (see `global.json`).
-- Style: enforced via `.editorconfig` and analyzers; keep code warning-free (TreatWarningsAsErrors=true).
-- Indentation: 4 spaces; use expression-bodied members when clear; prefer `readonly`/`sealed`.
-- Naming: PascalCase for types/methods, camelCase for locals/parameters, `_camelCase` for private fields; namespaces match folder and project names.
-- Modern C#:
-  - Primary constructors: `public sealed class Foo(IBar bar) : IFoo`.
-  - Collection initializers: `opt.OAuthScopes([.. settings.Scopes.Keys]);`.
-  - Pattern matching: `if (obj is IFoo foo) { /* ... */ }`.
-  - Records for immutables: `public record Employee(int Id, string Name);`.
-  - Null checks: `if (obj is null)` / `if (obj is not null)`.
+## Querying Microsoft Documentation
 
-#### TESTING
+You have access to MCP tools called `microsoft_docs_search`, `microsoft_docs_fetch`, and `microsoft_code_sample_search` - these tools allow you to search through and fetch Microsoft's latest official documentation and code samples, and that information might be more detailed or newer than what's in your training data set.
 
-- Framework: TUnit
-- Location: unit/integration projects under `Tests/`. Test projects mirror main projects with suffix `.Tests`.
-- Naming: `ClassName_MethodName_ShouldBehavior` for facts; integration tests may use Testcontainers—Docker required locally.
-- Avoid mocking unless necessary; prefer real implementations for integration tests. If mocking is needed, use NSubstitute.
-- Use WebApplicationFactory for in-memory hosting during integration tests.
-- Use Testcontainers for running databases in tests.
+When handling questions around how to work with native Microsoft technologies, such as C#, F#, ASP.NET Core, Microsoft.Extensions, NuGet, Entity Framework, the `dotnet` runtime - please use these tools for research purposes when dealing with specific / narrowly defined questions that may occur.
 
-## COMMANDS FOR BUILD AND TEST
-- `dotnet restore`: restores all solution packages.
-- `dotnet build -c Release -p:TreatWarningsAsErrors=true`: builds code with warnings treated as errors. This should be always used in CI/CD and before pull requests.
-- `dotnet test`: runs tests.
-- `dotnet format`: applies code style from `.editorconfig` and analyzers. If this command fails without a clear reason - use `dotnet format --verify-no-changes` that will output errors that couldn't be fixed automatically.
+---
 
-#### ENTITY FRAMEWORK
+## C# / .NET CODING STANDARDS
 
-- Use the repository and unit of work patterns to abstract data access logic and simplify testing
-- Implement eager loading with Include() to avoid N+1 query problems
-- Use migrations for database schema changes and version control with proper naming conventions
-- Apply appropriate tracking behavior (AsNoTracking() for read-only queries) to optimize performance
-- Implement query optimization techniques like compiled queries for frequently executed database operations
-- Configure entities using Fluent API, avoiding data annotations for better separation of concerns
-- **Type-Safe JSON Properties**: Never use string properties in entities for JSON data. Always create dedicated strongly-typed model classes in `Models/` directory and use EF Core's `OwnsOne()` or `OwnsMany()` with `ToJson()` for JSONB storage. This provides compile-time type safety, IntelliSense support, and better maintainability.
-  - Example: Instead of `string Selectors`, use `FeedSelectors Selectors` with a dedicated model class
-  - Configure with: `builder.OwnsOne(x => x.Selectors, b => b.ToJson());`
-- **Minimal Configuration Approach**: Only configure what EF Core cannot infer automatically. Avoid explicit configuration for table names, column names, standard types, and required/nullable properties that EF Core handles via conventions. This keeps configurations clean and focused on meaningful business rules.
-  - ❌ Don't: `.HasColumnName("id")`, `.HasColumnType("text")`, `.IsRequired()` for non-nullable properties, `.ToTable("feed")`
-  - ✅ Do: `.HasMaxLength(200)`, `.HasDefaultValue(60)`, `.HasDefaultValueSql("now()")`, `.HasCheckConstraint(...)`, `.ValueGeneratedNever()` for GUIDs
-  - Use `ConfigureConventions()` for global settings like enum-to-string conversion instead of per-property configuration
-  - Only specify column types when using database-specific features (e.g., `jsonb`, `text[]` for PostgreSQL arrays)
-- **Creating Migrations**: Use the `add_migration.sh` script located in `src/RSSVibe.Data/` to create new migrations. This script must be executed from the `src/RSSVibe.Data/` directory.
-  - Usage: `bash add_migration.sh <MigrationName>` (use PascalCase for migration names)
-  - Example: `cd src/RSSVibe.Data && bash add_migration.sh AddUserPreferences`
-  - The script handles the correct project and startup project paths automatically
-  - Review the generated migration file before applying it to ensure correctness
-  - Never modify migration files manually after generation - if changes are needed, remove the migration and regenerate it
+**Runtime**: C# 13 on .NET SDK 9.x (see `global.json`)
 
-#### ASP.NET
+### Code Style
+- MUST keep code warning-free (`TreatWarningsAsErrors=true`)
+- MUST use 4 spaces for indentation
+- MUST prefer `readonly` and `sealed` where applicable
+- MUST follow naming conventions:
+  - `PascalCase` for types and methods
+  - `camelCase` for locals and parameters
+  - `_camelCase` for private fields
+  - Namespaces MUST match folder and project names
 
-- Use minimal APIs for endpoints 
-- Apply proper response caching with cache profiles and ETags for improved performance on high traffic endpoints
-- Implement proper exception handling with ExceptionFilter or middleware to provide consistent error responses
-- Use dependency injection with scoped lifetime for request-specific services and singleton for stateless services
+### Modern C# Patterns (REQUIRED)
+```csharp
+// Primary constructors
+public sealed class Foo(IBar bar) : IFoo
 
-## DATABASE
+// Collection initializers with spread
+opt.OAuthScopes([.. settings.Scopes.Keys]);
 
-### Guidelines for SQL
+// Pattern matching
+if (obj is IFoo foo) { /* ... */ }
 
-#### POSTGRES
+// Records for immutable data
+public record Employee(int Id, string Name);
 
-- Use connection pooling to manage database connections efficiently
-- Implement JSONB columns for semi-structured data instead of creating many tables for data with flexible schemas
-- Use indexes on frequently queried columns to improve read performance
+// Null checks
+if (obj is null)
+if (obj is not null)
+```
+
+---
+
+## TESTING STANDARDS
+
+**Framework**: TUnit
+**Location**: `Tests/` directory with `.Tests` suffix matching main project
+
+### Test Organization
+- MUST name test methods: `ClassName_MethodName_ShouldBehavior`
+- MUST prefer real implementations over mocks (use NSubstitute only when necessary)
+- MUST use `WebApplicationFactory` for in-memory API hosting in integration tests
+- MUST use Testcontainers for database tests (Docker required locally)
+
+### Test Strategy
+- SHOULD write integration tests that verify real behavior end-to-end
+- SHOULD consider mocking strategy, test organization, and coverage comprehensively
+- AVOID unnecessary mocking that obscures real behavior
+
+---
+
+## BUILD & TEST COMMANDS
+
+```bash
+# Restore packages
+dotnet restore
+
+# Build with warnings as errors (REQUIRED before PRs)
+dotnet build -c Release -p:TreatWarningsAsErrors=true
+
+# Run tests
+dotnet test
+
+# Apply code style from .editorconfig
+dotnet format
+
+# Verify formatting (shows unfixable errors)
+dotnet format --verify-no-changes
+```
+
+---
+
+## ENTITY FRAMEWORK CORE PATTERNS
+
+### Data Access Patterns
+- MUST use repository and unit of work patterns for data access abstraction
+- MUST use eager loading with `Include()` to prevent N+1 query problems
+- MUST apply `AsNoTracking()` for read-only queries to optimize performance
+- MUST configure entities using Fluent API (AVOID data annotations)
+- SHOULD implement compiled queries for frequently executed operations
+
+### Type-Safe JSON Properties (CRITICAL)
+**NEVER use string properties for JSON data**
+
+❌ **WRONG**:
+```csharp
+public class Feed {
+    public string Selectors { get; set; }  // Don't do this!
+}
+```
+
+✅ **CORRECT**:
+```csharp
+// Create strongly-typed model in Models/ directory
+public class FeedSelectors {
+    public string Title { get; set; }
+    public string Content { get; set; }
+}
+
+public class Feed {
+    public FeedSelectors Selectors { get; set; }  // Type-safe!
+}
+
+// Configure with Fluent API
+builder.OwnsOne(x => x.Selectors, b => b.ToJson());
+```
+
+**Benefits**: Compile-time type safety, IntelliSense support, better maintainability
+
+### Minimal Configuration Approach
+**ONLY configure what EF Core cannot infer automatically**
+
+❌ **AVOID** (EF Core infers these automatically):
+```csharp
+.HasColumnName("id")
+.HasColumnType("text")
+.IsRequired()  // for non-nullable properties
+.ToTable("feed")
+```
+
+✅ **DO** (meaningful business rules only):
+```csharp
+.HasMaxLength(200)
+.HasDefaultValue(60)
+.HasDefaultValueSql("now()")
+.HasCheckConstraint("check_positive", "value > 0")
+.ValueGeneratedNever()  // for GUIDs
+```
+
+- ONLY specify column types for database-specific features (e.g., `jsonb`, `text[]` for PostgreSQL)
+
+### Migration Management
+
+**MUST use the migration script**: `src/RSSVibe.Data/add_migration.sh`
+
+```bash
+# Navigate to Data project directory
+cd src/RSSVibe.Data
+
+# Create migration (use PascalCase)
+bash add_migration.sh AddUserPreferences
+```
+
+- MUST execute script from `src/RSSVibe.Data/` directory
+- MUST review generated migration file before applying
+- NEVER modify migration files manually (remove and regenerate instead)
+- Script handles correct project and startup project paths automatically
+
+---
+
+## ASP.NET CORE WEB API
+
+### API Design
+- MUST use minimal APIs for endpoints
+- MUST implement proper exception handling with ExceptionFilter or middleware for consistent error responses
+- SHOULD apply response caching with cache profiles and ETags for high-traffic endpoints
+
+### Dependency Injection
+- MUST use scoped lifetime for request-specific services
+- MUST use singleton lifetime for stateless services
+
+---
+
+## POSTGRESQL DATABASE
+
+### Performance & Design
+- MUST use connection pooling for efficient connection management
+- MUST use JSONB columns for semi-structured data (avoid creating many tables for flexible schemas)
+- MUST create indexes on frequently queried columns to improve read performance
+
+### Query Optimization
+- SHOULD monitor query plans for expensive operations
+- SHOULD use partial indexes when filtering on specific conditions
+- SHOULD consider materialized views for complex aggregations
+
+---
+
+## QUICK REFERENCE
+
+| Task | Command/Pattern |
+|------|----------------|
+| Build for PR | `dotnet build -c Release -p:TreatWarningsAsErrors=true` |
+| Create migration | `cd src/RSSVibe.Data && bash add_migration.sh MigrationName` |
+| Test naming | `ClassName_MethodName_ShouldBehavior` |
+| Branch naming | `feature/{description}` or `bugfix/{description}` |
+| JSON in EF | Create model class + `OwnsOne(x => x.Prop, b => b.ToJson())` |
+| Commit style | Conventional commits explaining WHY |
