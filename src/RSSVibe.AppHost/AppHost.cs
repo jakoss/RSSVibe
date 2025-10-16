@@ -5,6 +5,7 @@ var postgresPassword = builder.AddParameter("postgres-password", "P@ssw0rd!");
 
 var postgresServer = builder.AddPostgres("postgres", postgresUsername, postgresPassword)
     .WithDataVolume("rssvibe-postgres-data")
+    .WithImageTag("18")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithDbGate();
 

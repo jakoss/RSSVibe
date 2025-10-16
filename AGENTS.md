@@ -75,6 +75,20 @@ RSSVibe is a project that aims to provide a seamless and personalized news aggre
 - Apply appropriate tracking behavior (AsNoTracking() for read-only queries) to optimize performance
 - Implement query optimization techniques like compiled queries for frequently executed database operations
 - Configure entities using Fluent API, avoiding data annotations for better separation of concerns
+- **Type-Safe JSON Properties**: Never use string properties in entities for JSON data. Always create dedicated strongly-typed model classes in `Models/` directory and use EF Core's `OwnsOne()` or `OwnsMany()` with `ToJson()` for JSONB storage. This provides compile-time type safety, IntelliSense support, and better maintainability.
+  - Example: Instead of `string Selectors`, use `FeedSelectors Selectors` with a dedicated model class
+  - Configure with: `builder.OwnsOne(x => x.Selectors, b => b.ToJson());`
+- **Minimal Configuration Approach**: Only configure what EF Core cannot infer automatically. Avoid explicit configuration for table names, column names, standard types, and required/nullable properties that EF Core handles via conventions. This keeps configurations clean and focused on meaningful business rules.
+  - ❌ Don't: `.HasColumnName("id")`, `.HasColumnType("text")`, `.IsRequired()` for non-nullable properties, `.ToTable("feed")`
+  - ✅ Do: `.HasMaxLength(200)`, `.HasDefaultValue(60)`, `.HasDefaultValueSql("now()")`, `.HasCheckConstraint(...)`, `.ValueGeneratedNever()` for GUIDs
+  - Use `ConfigureConventions()` for global settings like enum-to-string conversion instead of per-property configuration
+  - Only specify column types when using database-specific features (e.g., `jsonb`, `text[]` for PostgreSQL arrays)
+- **Creating Migrations**: Use the `add_migration.sh` script located in `src/RSSVibe.Data/` to create new migrations. This script must be executed from the `src/RSSVibe.Data/` directory.
+  - Usage: `bash add_migration.sh <MigrationName>` (use PascalCase for migration names)
+  - Example: `cd src/RSSVibe.Data && bash add_migration.sh AddUserPreferences`
+  - The script handles the correct project and startup project paths automatically
+  - Review the generated migration file before applying it to ensure correctness
+  - Never modify migration files manually after generation - if changes are needed, remove the migration and regenerate it
 
 #### ASP.NET
 

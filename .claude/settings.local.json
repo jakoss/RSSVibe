@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build:*)",
+      "Bash(bash:*)",
+      "Bash(bash src/RSSVibe.Data/add_migration.sh *)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

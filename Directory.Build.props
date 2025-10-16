@@ -6,8 +6,8 @@
 		<AnalysisMode>Recommended</AnalysisMode>
         <Nullable>enable</Nullable>
         <WarningsAsErrors>Nullable</WarningsAsErrors>
+        <ImplicitUsings>enable</ImplicitUsings>
         <TreatWarningsAsErrors Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</TreatWarningsAsErrors>
-        <EnforceCodeStyleInBuild Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</EnforceCodeStyleInBuild>
         <Deterministic Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</Deterministic>
 	</PropertyGroup>
 </Project>
