@@ -10,10 +10,11 @@
 - `PublicRss` → Virtual resource generated from feeds and items, delivered as RSS 2.0 XML for anonymous consumption.
 
 ## 2. Endpoints
+All authenticated API endpoints are mapped beneath a shared Minimal API group configured as `var v1 = app.MapGroup("/api/v1");` so we can centralize filters (validation, auth, error handling) and preserve a clean surface for future `/api/v2` breaking changes.
 
 ### 2.1 Auth
 
-#### POST /auth/register
+#### POST /api/v1/auth/register
 - Description: Create a new user account backed by ASP.NET Identity; disabled in production when provisioning root user via environment variables.
 - Request:
 ```json
@@ -33,10 +34,10 @@
   "mustChangePassword": false
 }
 ```
-- Success: `201 Created` with Location `/auth/profile`.
+- Success: `201 Created` with Location `/api/v1/auth/profile`.
 - Errors: `400` (validation), `409` (email already registered), `503` (identity store unavailable).
 
-#### POST /auth/login
+#### POST /api/v1/auth/login
 - Description: Authenticate and return JWT access token plus refresh token; flag root user if password rotation required.
 - Request:
 ```json
@@ -58,7 +59,7 @@
 - Success: `200 OK`.
 - Errors: `400` (missing credentials), `401` (invalid credentials), `423` (account locked).
 
-#### POST /auth/refresh
+#### POST /api/v1/auth/refresh
 - Description: Exchange refresh token for new JWT; revoke on reuse attempts.
 - Request:
 ```json
@@ -78,7 +79,7 @@
 - Success: `200 OK`.
 - Errors: `400` (invalid payload), `401` (expired or revoked token), `409` (token replay detected).
 
-#### POST /auth/change-password
+#### POST /api/v1/auth/change-password
 - Description: Force password rotation, required for bootstrapped root user on first login.
 - Request:
 ```json
@@ -90,7 +91,7 @@
 - Response: `204 No Content`.
 - Errors: `400` (weak password), `401` (invalid current password), `429` (too many attempts).
 
-#### GET /auth/profile
+#### GET /api/v1/auth/profile
 - Description: Retrieve current user profile including security posture metadata (e.g., password rotation requirement).
 - Query parameters: none.
 - Response:
@@ -109,7 +110,7 @@
 
 ### 2.2 Feed Analyses
 
-#### POST /api/feed-analyses
+#### POST /api/v1/feed-analyses
 - Description: Initiate AI-powered analysis and preflight checks for a submitted URL; enqueues background workflow and returns analysis resource.
 - Request:
 ```json
@@ -132,10 +133,10 @@
   "createdAt": "2024-05-01T12:01:00Z"
 }
 ```
-- Success: `202 Accepted` with Location `/api/feed-analyses/{analysisId}`.
+- Success: `202 Accepted` with Location `/api/v1/feed-analyses/{analysisId}`.
 - Errors: `400` (invalid URL, missing OpenRouter configuration), `401` (unauthenticated), `409` (duplicate normalized URL per user), `422` (preflight fails validation), `503` (AI provider unavailable).
 
-#### GET /api/feed-analyses
+#### GET /api/v1/feed-analyses
 - Description: List analyses for current user, supporting dashboards and moderation flows.
 - Query parameters: `status` (`pending|completed|failed|superseded`), `sort` (`createdAt|updatedAt` with suffix `:asc|:desc` default `createdAt:desc`), `skip` (>=0 default 0), `take` (1-50 default 20), `search` (partial target URL).
 - Response:
@@ -162,7 +163,7 @@
 - Success: `200 OK`.
 - Errors: `401`, `422` (bad sort or offset input).
 
-#### GET /api/feed-analyses/{analysisId}
+#### GET /api/v1/feed-analyses/{analysisId}
 - Description: Retrieve full analysis payload including selectors, warnings, and preflight metadata.
 - Response:
 ```json
@@ -190,7 +191,7 @@
 - Success: `200 OK`.
 - Errors: `401`, `403` (accessing other user’s record), `404`.
 
-#### PATCH /api/feed-analyses/{analysisId}/selectors
+#### PATCH /api/v1/feed-analyses/{analysisId}/selectors
 - Description: Allow user to update proposed selectors before approving the feed; persists strongly typed `FeedSelectors`.
 - Request:
 ```json
@@ -229,7 +230,7 @@
 ```
 - Errors: `400` (invalid selector schema), `401`, `403`, `404`, `409` (analysis already superseded).
 
-#### POST /api/feed-analyses/{analysisId}/rerun
+#### POST /api/v1/feed-analyses/{analysisId}/rerun
 - Description: Re-enqueue AI analysis after selector edits or failures.
 - Response:
 ```json
@@ -241,7 +242,7 @@
 - Success: `202 Accepted`.
 - Errors: `401`, `403`, `404`, `409` (analysis already linked to approved feed), `429` (rerun throttle).
 
-#### GET /api/feed-analyses/{analysisId}/preview
+#### GET /api/v1/feed-analyses/{analysisId}/preview
 - Description: Return up to 10 preview items captured using current selectors for side-by-side UI.
 - Query parameters: `limit` (1-10 default 10), `fresh` (boolean to bypass cache).
 - Response:
@@ -263,7 +264,7 @@
 
 ### 2.3 Feeds
 
-#### POST /api/feeds
+#### POST /api/v1/feeds
 - Description: Approve an analysis and create a feed configuration; copies selectors, schedule, and metadata into `Feeds`.
 - Request:
 ```json
@@ -298,10 +299,10 @@
   "rssUrl": "/feed/{userId}/{feedId}"
 }
 ```
-- Success: `201 Created` with Location `/api/feeds/{feedId}`.
+- Success: `201 Created` with Location `/api/v1/feeds/{feedId}`.
 - Errors: `400` (missing schedule or violates constraints), `401`, `403`, `404` (analysis not found), `409` (duplicate normalized source URL), `422` (analysis not completed or preflight failed), `503` (background scheduler unavailable).
 
-#### GET /api/feeds
+#### GET /api/v1/feeds
 - Description: List authenticated user feeds with offset pagination, filtering, and schedule insights.
 - Query parameters: `skip` (>=0 default 0), `take` (1-50 default 20), `sort` (`createdAt|lastParsedAt|title` with `:asc|:desc` default `lastParsedAt:desc`), `status` (`lastParseStatus` filter), `nextParseBefore` (ISO timestamp), `search` (title or URL), `includeInactive` (boolean).
 - Response:
@@ -344,7 +345,7 @@
 - Success: `200 OK`.
 - Errors: `401`, `422` (invalid filters).
 
-#### GET /api/feeds/{feedId}
+#### GET /api/v1/feeds/{feedId}
 - Description: Retrieve feed detail including selectors, schedule, and cache metadata.
 - Response:
 ```json
@@ -387,7 +388,7 @@
 - Success: `200 OK`.
 - Errors: `401`, `403`, `404`.
 
-#### PATCH /api/feeds/{feedId}
+#### PATCH /api/v1/feeds/{feedId}
 - Description: Update mutable fields (title, description, language, selectors override, schedule, ttl).
 - Request:
 ```json
@@ -412,12 +413,12 @@
 - Success: `200 OK`.
 - Errors: `400`, `401`, `403`, `404`, `409` (normalized source URL conflict), `422` (invalid selector schema or schedule), `503` (scheduler unavailable).
 
-#### DELETE /api/feeds/{feedId}
+#### DELETE /api/v1/feeds/{feedId}
 - Description: Soft delete feed, cascade stops to scheduler and optional purge of items.
 - Response: `204 No Content`.
 - Errors: `401`, `403`, `404`, `409` (feed currently parsing), `503` (scheduler unavailable).
 
-#### POST /api/feeds/{feedId}/trigger-parse
+#### POST /api/v1/feeds/{feedId}/trigger-parse
 - Description: Manually enqueue immediate parse run; limited by rate limiter and Polly policy.
 - Response:
 ```json
@@ -432,7 +433,7 @@
 
 ### 2.4 Feed Items
 
-#### GET /api/feeds/{feedId}/items
+#### GET /api/v1/feeds/{feedId}/items
 - Description: Offset-paginated retrieval of feed items using `AsNoTracking()` and indexed sorting.
 - Query parameters: `skip` (>=0 default 0), `take` (1-100 default 25), `sort` (`publishedAt|discoveredAt|lastSeenAt` with `:desc` default `publishedAt:desc`), `since` (ISO timestamp filter on `PublishedAt`), `until`, `changeKind` (`new|refreshed|unchanged`), `includeMetadata` (boolean to include `rawMetadata`).
 - Response:
@@ -464,7 +465,7 @@
 - Success: `200 OK` with `ETag` and `Cache-Control: private, max-age=60`.
 - Errors: `401`, `403`, `404`, `422` (invalid sort), `503` (database timeout).
 
-#### GET /api/feeds/{feedId}/items/{itemId}
+#### GET /api/v1/feeds/{feedId}/items/{itemId}
 - Description: Detailed view of a feed item including associated parse runs.
 - Response:
 ```json
@@ -495,7 +496,7 @@
 
 ### 2.5 Feed Parse Runs
 
-#### GET /api/feeds/{feedId}/parse-runs
+#### GET /api/v1/feeds/{feedId}/parse-runs
 - Description: Offset-paginated history of parse runs ordered by `StartedAt desc` using indexed query.
 - Query parameters: `skip` (>=0 default 0), `take` (1-50 default 20), `status`, `from`/`to` (ISO interval on `StartedAt`), `includeFailuresOnly` (boolean), `includeResponseHeaders` (boolean).
 - Response:
@@ -531,7 +532,7 @@
 - Success: `200 OK`.
 - Errors: `401`, `403`, `404`, `422`.
 
-#### GET /api/feeds/{feedId}/parse-runs/{runId}
+#### GET /api/v1/feeds/{feedId}/parse-runs/{runId}
 - Description: Retrieve run details including resiliency metrics and HTTP caching info.
 - Response:
 ```json
@@ -559,7 +560,7 @@
 - Success: `200 OK`.
 - Errors: `401`, `403`, `404`.
 
-#### GET /api/feeds/{feedId}/parse-runs/{runId}/items
+#### GET /api/v1/feeds/{feedId}/parse-runs/{runId}/items
 - Description: List items associated with a parse run using `FeedParseRunItems`.
 - Query parameters: `changeKind`, `skip` (>=0 default 0), `take` (1-100 default 25).
 - Response:
@@ -634,8 +635,8 @@
 - Use ASP.NET Identity with password hashing (PBKDF2) and account lockout policies. Registration is optional; production provisioning relies on environment-seeded root user requiring forced password change.
 - Issue JWT access tokens (15–30 minutes) and sliding refresh tokens stored server-side; tokens carry `sub`, `email`, `roles`, `mustChangePassword`. Require HTTPS and secure cookie storage for refresh tokens in browser clients.
 - Enforce role-based policies: `Admin` for system diagnostics and other operational endpoints, `User` for feed operations. Resource-level authorization ensures `FeedAnalysis`, `Feed`, `FeedItem`, and `FeedParseRun` are accessible only to owners via `UserId` checks.
-- Implement rate limiting (e.g., ASP.NET rate limiter) for `POST /api/feed-analyses`, manual parse triggers, and login attempts to mitigate abuse.
-- All APIs require bearer tokens except `/auth/login`, `/auth/register` (configurable), `/feed/*`, and `/health/*` (restricted by network ACLs or API gateway).
+- Implement rate limiting (e.g., ASP.NET rate limiter) for `POST /api/v1/feed-analyses`, manual parse triggers, and login attempts to mitigate abuse.
+- All APIs require bearer tokens except `/api/v1/auth/login`, `/api/v1/auth/register` (configurable), `/feed/*`, and `/health/*` (restricted by network ACLs or API gateway).
 - Employ FusionCache backed by Redis for token blacklists and analysis preview caching while maintaining sliding expiration to reduce AI recomputation.
 - Log OpenTelemetry traces for auth events, parse workflows, and AI analysis using W3C trace context to correlate with background worker spans.
 
