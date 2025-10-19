@@ -18,6 +18,7 @@ This document outlines the technologies chosen for the RSSVibe project and expla
 - **ASP.NET Core**: 
   - The API layer is developed using ASP.NET Core. This framework delivers high performance, scalability, and security. It also integrates well with other parts of the Microsoft ecosystem.
   - For endpoints implementation we will use **Minimal APIs**, which provide a lightweight and efficient way to create HTTP APIs with minimal boilerplate code. This approach is ideal for building simple and fast endpoints, making it easier to maintain and scale the API as needed.
+  - For request validation we use **FluentValidation** with automatic wiring provided by **SharpGrip.FluentValidation.AutoValidation.Endpoints**, ensuring Minimal APIs run validators before handlers execute without repetitive plumbing.
   - For endpoint security and user management, we use **ASP.NET Identity**, which provides a robust and flexible authentication and authorization system.
   - For unit and integration tests we will use **TUnit**, a testing framework designed for .NET applications. It offers a simple and effective way to write and run integration tests, ensuring the reliability and correctness of the API.
   - For integration tests we will use WebApplicationFactory, which is part of the ASP.NET Core testing framework. It allows for in-memory hosting of the web application during tests, enabling comprehensive integration testing without the need for a full deployment.

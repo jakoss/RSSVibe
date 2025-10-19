@@ -206,6 +206,7 @@ bash add_migration.sh AddUserPreferences
 ### API Design
 - MUST use minimal APIs for endpoints
 - MUST implement proper exception handling with ExceptionFilter or middleware for consistent error responses
+- MUST validate inbound requests with FluentValidation and rely on SharpGrip.FluentValidation.AutoValidation.Endpoints to run validators automatically before handlers execute
 - SHOULD apply response caching with cache profiles and ETags for high-traffic endpoints
 
 ### Dependency Injection
