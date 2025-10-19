@@ -61,7 +61,9 @@ When handling questions around how to work with native Microsoft technologies, s
   - `PascalCase` for types and methods
   - `camelCase` for locals and parameters
   - `_camelCase` for private fields
-  - Namespaces MUST match folder and project names
+- Namespaces MUST match folder and project names
+- MUST declare API request/response models as positional records (constructor parameters over property setters) for immutability and clarity
+- MUST define FluentValidation validator types as nested classes named `Validator` inside the validated type so they can be referenced via `ValidatedType.Validator`
 
 ### Modern C# Patterns (REQUIRED)
 ```csharp
@@ -205,6 +207,7 @@ bash add_migration.sh AddUserPreferences
 
 ### API Design
 - MUST use minimal APIs for endpoints
+- MUST organize minimal API endpoints with one endpoint per file and folder hierarchy mirroring the route structure
 - MUST implement proper exception handling with ExceptionFilter or middleware for consistent error responses
 - MUST validate inbound requests with FluentValidation and rely on SharpGrip.FluentValidation.AutoValidation.Endpoints to run validators automatically before handlers execute
 - SHOULD apply response caching with cache profiles and ETags for high-traffic endpoints
