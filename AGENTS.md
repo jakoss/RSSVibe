@@ -216,6 +216,13 @@ bash add_migration.sh AddUserPreferences
 - MUST use scoped lifetime for request-specific services
 - MUST use singleton lifetime for stateless services
 
+### API Contracts
+- MUST define all API request/response models in the `RSSVibe.Contracts` project
+- API contracts are shared between frontend and backend services via project reference
+- MUST use positional records for all contract models (immutability and clarity)
+- MUST document contract changes in commit messages and ADRs when adding new endpoints or modifying existing ones
+- Contracts include DTOs for API requests, responses, and domain models exposed to clients
+
 ---
 
 ## POSTGRESQL DATABASE

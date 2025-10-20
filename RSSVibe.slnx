@@ -13,6 +13,7 @@
   <Project Path="src/RSSVibe.AppHost/RSSVibe.AppHost.csproj" />
   <Project Path="src/RSSVibe.ServiceDefaults/RSSVibe.ServiceDefaults.csproj" />
   <Project Path="src/RSSVibe.Web/RSSVibe.Web.csproj" />
-  <Project Path="src\RSSVibe.Data\RSSVibe.Data.csproj" Type="Classic C#" />
-  <Project Path="src\RSSVibe.MigrationService\RSSVibe.MigrationService.csproj" Type="Classic C#" />
+  <Project Path="src/RSSVibe.Contracts/RSSVibe.Contracts.csproj" />
+  <Project Path="src/RSSVibe.Data/RSSVibe.Data.csproj" />
+  <Project Path="src/RSSVibe.MigrationService/RSSVibe.MigrationService.csproj" />
 </Solution>
