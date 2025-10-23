@@ -1,19 +1,21 @@
 <Solution>
-  <Folder Name="AI">
+  <Folder Name="/AI/">
     <File Path="AGENTS.md" />
     <File Path=".ai/prd.md" />
     <File Path=".ai/db-plan.md" />
     <File Path=".ai/tech-stack.md" />
   </Folder>
-  <Folder Name="Directory Props">
+  <Folder Name="/Directory Props/">
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
   </Folder>
+  <Folder Name="/Tests/" />
   <Project Path="src/RSSVibe.ApiService/RSSVibe.ApiService.csproj" />
   <Project Path="src/RSSVibe.AppHost/RSSVibe.AppHost.csproj" />
-  <Project Path="src/RSSVibe.ServiceDefaults/RSSVibe.ServiceDefaults.csproj" />
-  <Project Path="src/RSSVibe.Web/RSSVibe.Web.csproj" />
   <Project Path="src/RSSVibe.Contracts/RSSVibe.Contracts.csproj" />
   <Project Path="src/RSSVibe.Data/RSSVibe.Data.csproj" />
   <Project Path="src/RSSVibe.MigrationService/RSSVibe.MigrationService.csproj" />
+  <Project Path="src/RSSVibe.ServiceDefaults/RSSVibe.ServiceDefaults.csproj" />
+  <Project Path="src/RSSVibe.Web/RSSVibe.Web.csproj" />
+  <Project Path="src\RSSVibe.Services\RSSVibe.Services.csproj" Type="Classic C#" />
 </Solution>

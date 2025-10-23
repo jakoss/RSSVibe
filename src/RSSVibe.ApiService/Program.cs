@@ -1,4 +1,9 @@
+using Microsoft.AspNetCore.Identity;
+using RSSVibe.ApiService.Configuration;
+using RSSVibe.ApiService.Endpoints;
 using RSSVibe.Data.Extensions;
+using RSSVibe.Services.Extensions;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +15,26 @@ builder.Services.AddProblemDetails();
 
 builder.Services.AddOpenApi();
 
+// Configure authentication settings
+builder.Services.Configure<AuthConfiguration>(
+    builder.Configuration.GetSection("Auth"));
+
+// Configure Identity password policy
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequiredLength = 12;
+});
+
+// Register all RSSVibe application services
+builder.Services.AddRssVibeServices();
+
+// Note: FluentValidation auto-validation is configured via SharpGrip.FluentValidation.AutoValidation.Endpoints
+// which automatically validates request models that have validators defined as nested classes
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -18,29 +43,12 @@ app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
-string[] summaries = ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+// Map all API endpoints organized hierarchically under /api/v1
+app.MapApiV1();
 
 app.MapDefaultEndpoints();
 
-app.Run();
-
-sealed record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+await app.RunAsync();

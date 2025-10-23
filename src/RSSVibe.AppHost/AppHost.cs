@@ -20,6 +20,7 @@ var migrationService = builder.AddProject<Projects.RSSVibe_MigrationService>("mi
 
 var apiService = builder.AddProject<Projects.RSSVibe_ApiService>("apiservice")
     .WithHttpHealthCheck("/health")
+    .WithUrl("/scalar/v1", "Scalar") // TODO: add "normal" endpoint url as well
     .WithReference(rssvibeDb)
     .WaitFor(rssvibeDb)
     .WithReference(migrationService)

@@ -3,7 +3,8 @@
     "allow": [
       "Bash(dotnet build:*)",
       "Bash(bash:*)",
-      "Bash(bash src/RSSVibe.Data/add_migration.sh *)"
+      "Bash(bash src/RSSVibe.Data/add_migration.sh *)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
