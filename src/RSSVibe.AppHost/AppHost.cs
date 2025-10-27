@@ -1,9 +1,6 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var postgresUsername = builder.AddParameter("postgres-username", "postgres");
-var postgresPassword = builder.AddParameter("postgres-password", "P@ssw0rd!");
-
-var postgresServer = builder.AddPostgres("postgres", postgresUsername, postgresPassword)
+var postgresServer = builder.AddPostgres("postgres")
     .WithDataVolume("rssvibe-postgres-data")
     .WithImageTag("18")
     .WithLifetime(ContainerLifetime.Persistent)
@@ -12,7 +9,7 @@ var postgresServer = builder.AddPostgres("postgres", postgresUsername, postgresP
         resourceBuilder.WithLifetime(ContainerLifetime.Persistent);
     }, "rssvibe-dbgate");
 
-var rssvibeDb = postgresServer.AddDatabase("rssvibe-db");
+var rssvibeDb = postgresServer.AddDatabase("rssvibedb");
 
 var migrationService = builder.AddProject<Projects.RSSVibe_MigrationService>("migrationservice")
     .WithReference(rssvibeDb)

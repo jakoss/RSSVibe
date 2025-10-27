@@ -1,6 +1,8 @@
+using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
+
 namespace RSSVibe.ApiService.Endpoints;
 
-using RSSVibe.ApiService.Endpoints.Auth;
+using Auth;
 
 /// <summary>
 /// Registers all API endpoints under the /api/v1 route group with shared configuration.
@@ -19,6 +21,7 @@ public static class ApiGroup
 
         // Register all feature groups
         group.MapAuthGroup();
+        group.AddFluentValidationAutoValidation();
 
         // Future feature groups can be added here
         // group.MapFeedsGroup();

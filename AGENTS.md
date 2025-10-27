@@ -104,6 +104,270 @@ if (obj is not null)
 
 ---
 
+## ENDPOINT INTEGRATION TESTING
+
+### Test Infrastructure Overview
+
+RSSVibe uses a **real integration testing approach** with actual database and services, not mocks. This provides high confidence that the system works correctly end-to-end.
+
+**Key Components**:
+1. **PostgresTestContainer** - Manages PostgreSQL Docker container lifecycle
+2. **TestApplication** - Custom `WebApplicationFactory<Program>` that configures the app with test database
+3. **TestsBase** - Base class providing shared test infrastructure via `ClassDataSource`
+
+**Shared Resource Pattern**:
+- Test containers and application factory are shared across all tests in a session using `SharedType.PerTestSession`
+- Reduces test execution time by avoiding repeated container startup/teardown
+- Database migrations run once during `TestApplication.InitializeAsync()`
+
+### Test File Organization
+
+**Pattern**: Mirror the endpoint folder structure under `Tests/` directory
+
+```
+Tests/RSSVibe.ApiService.Tests/
+  └── Endpoints/
+      └── Auth/
+          ├── RegisterEndpointTests.cs
+          ├── LoginEndpointTests.cs
+          └── RefreshTokenEndpointTests.cs
+      └── Feeds/
+          ├── ListFeedsEndpointTests.cs
+          └── CreateFeedEndpointTests.cs
+```
+
+**Naming Convention**: `{EndpointName}Tests.cs`
+
+### Test Class Structure
+
+```csharp
+using System.Net;
+using System.Net.Http.Json;
+using RSSVibe.Contracts.Auth;
+
+namespace RSSVibe.ApiService.Tests.Endpoints.Auth;
+
+/// <summary>
+/// Integration tests for the RegisterEndpoint (/api/v1/auth/register).
+/// Tests use real WebApplicationFactory with database and services.
+/// </summary>
+public class RegisterEndpointTests : TestsBase
+{
+    [Test]
+    public async Task RegisterEndpoint_WithValidRequest_ShouldReturnCreatedWithUserData()
+    {
+        // Arrange
+        var client = WebApplicationFactory.CreateClient();
+        var request = new RegisterRequest(
+            Email: "testuser@example.com",
+            Password: "SecurePass123!",
+            DisplayName: "Test User",
+            MustChangePassword: false
+        );
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/v1/auth/register", request);
+
+        // Assert
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Created);
+
+        var responseData = await response.Content.ReadFromJsonAsync<RegisterResponse>();
+        await Assert.That(responseData).IsNotNull();
+        await Assert.That(responseData!.Email).IsEqualTo(request.Email);
+        await Assert.That(responseData.DisplayName).IsEqualTo(request.DisplayName);
+        await Assert.That(responseData.UserId).IsNotEqualTo(Guid.Empty);
+    }
+
+    // Additional test methods...
+}
+```
+
+### Test Method Naming Convention
+
+**Format**: `{EndpointName}_{Scenario}_{ExpectedBehavior}`
+
+**Examples**:
+- `RegisterEndpoint_WithValidRequest_ShouldReturnCreatedWithUserData`
+- `RegisterEndpoint_WithDuplicateEmail_ShouldReturnConflict`
+- `RegisterEndpoint_WithInvalidEmail_ShouldReturnValidationError`
+- `ListFeedsEndpoint_WithPagination_ShouldReturnPagedResults`
+
+**Benefits**:
+- Clear test intent from method name alone
+- Easy to identify what scenario is being tested
+- Groups related tests by endpoint when viewed alphabetically
+
+### Test Scenarios to Cover
+
+For each endpoint, SHOULD test the following scenarios (where applicable):
+
+**1. Success Cases**:
+- Happy path with valid input
+- Edge cases (empty lists, boundary values, optional fields)
+- Different valid input combinations
+
+**2. Validation Failures** (400 Bad Request):
+- Missing required fields
+- Invalid formats (email, dates, etc.)
+- Out-of-range values
+- Business rule violations
+
+**3. Authentication/Authorization** (401/403):
+- Unauthenticated requests
+- Insufficient permissions
+- Expired tokens
+
+**4. Resource States** (404/409):
+- Resource not found
+- Resource already exists
+- Resource conflicts
+
+**5. Service Errors** (500/503):
+- Database unavailable (can be tested with test infrastructure)
+- External service failures
+
+### TUnit Assertion Syntax
+
+TUnit uses a fluent assertion style with `await Assert.That()`:
+
+```csharp
+// Equality
+await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Created);
+await Assert.That(value).IsNotEqualTo(0);
+
+// Null checks
+await Assert.That(data).IsNotNull();
+await Assert.That(data).IsNull();
+
+// Boolean checks
+await Assert.That(result).IsTrue();
+await Assert.That(result).IsFalse();
+
+// Collections
+await Assert.That(list).HasCount(5);
+await Assert.That(list).IsEmpty();
+await Assert.That(list).Contains(item);
+
+// Strings
+await Assert.That(text).StartsWith("Hello");
+await Assert.That(text).EndsWith("World");
+await Assert.That(text).Contains("test");
+```
+
+### HTTP Client Helpers
+
+```csharp
+// GET requests
+var response = await client.GetAsync("/api/v1/feeds");
+var data = await response.Content.ReadFromJsonAsync<ListFeedsResponse>();
+
+// POST requests with JSON body
+var request = new CreateFeedRequest(...);
+var response = await client.PostAsJsonAsync("/api/v1/feeds", request);
+
+// PUT requests
+await client.PutAsJsonAsync("/api/v1/feeds/{id}", updateRequest);
+
+// DELETE requests
+await client.DeleteAsync("/api/v1/feeds/{id}");
+
+// Check response status
+await Assert.That(response.IsSuccessStatusCode).IsTrue();
+await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Created);
+
+// Check response headers
+await Assert.That(response.Headers.Location?.ToString()).IsEqualTo("/api/v1/auth/profile");
+```
+
+### Database State Management
+
+**Important**: Tests share a database instance, so you SHOULD:
+- Use unique identifiers (GUIDs, unique emails) to avoid conflicts between tests
+- Design tests to be idempotent where possible
+- Clean up test data if necessary (though TUnit's parallel execution model minimizes conflicts)
+
+**Example**:
+```csharp
+// Good: Unique email per test
+var request = new RegisterRequest(
+    Email: $"test_{Guid.NewGuid():N}@example.com",
+    Password: "SecurePass123!",
+    DisplayName: "Test User",
+    MustChangePassword: false
+);
+
+// Bad: Hard-coded email causes conflicts
+var request = new RegisterRequest(
+    Email: "test@example.com", // Will conflict with other tests!
+    // ...
+);
+```
+
+### Configuration Testing
+
+Tests inherit application configuration from `appsettings.json`. To test configuration-dependent scenarios, use `WithWebHostBuilder` to create a customized factory with overridden configuration.
+
+**Pattern - Override configuration with WithWebHostBuilder**:
+```csharp
+[Test]
+public async Task RegisterEndpoint_WhenRegistrationDisabled_ShouldReturnForbidden()
+{
+    // Arrange - Create factory with custom configuration
+    var customFactory = WebApplicationFactory.WithWebHostBuilder(builder =>
+    {
+        builder.ConfigureAppConfiguration((_, configBuilder) =>
+        {
+            configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { "Auth:AllowRegistration", "false" } // Override config
+            });
+        });
+    });
+
+    var client = customFactory.CreateClient();
+    var request = new RegisterRequest(
+        Email: "test@example.com",
+        Password: "SecurePass123!",
+        DisplayName: "Test User",
+        MustChangePassword: false
+    );
+
+    // Act
+    var response = await client.PostAsJsonAsync("/api/v1/auth/register", request);
+
+    // Assert
+    await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Forbidden);
+}
+```
+
+**Important Notes**:
+- `WithWebHostBuilder` creates a new factory instance with the specified customizations
+- Configuration overrides are merged with existing configuration (not replaced)
+- Each test can create its own customized factory for specific scenarios
+- The base `WebApplicationFactory` from `TestsBase` remains unmodified
+
+### Best Practices
+
+**DO**:
+- ✅ Test one scenario per test method
+- ✅ Use descriptive test names that explain the scenario
+- ✅ Use unique identifiers (GUIDs) to avoid test conflicts
+- ✅ Test actual HTTP responses, not internal implementation details
+- ✅ Verify response status codes, headers, and body content
+- ✅ Test validation rules comprehensively
+- ✅ Test error cases as thoroughly as success cases
+- ✅ Use `await Assert.That()` for all assertions
+
+**DON'T**:
+- ❌ Mock services in endpoint integration tests (use real implementations)
+- ❌ Test multiple unrelated scenarios in one test method
+- ❌ Hard-code test data that causes conflicts between tests
+- ❌ Rely on test execution order (tests should be independent)
+- ❌ Skip validation and error case testing
+- ❌ Test internal implementation details (test the public API contract)
+
+---
+
 ## BUILD & TEST COMMANDS
 
 ```bash
@@ -480,7 +744,10 @@ private static async Task<Results<Ok<RegisterResponse>, Conflict, ServiceUnavail
 |------|----------------|
 | Build for PR | `dotnet build -c Release -p:TreatWarningsAsErrors=true` |
 | Create migration | `cd src/RSSVibe.Data && bash add_migration.sh MigrationName` |
-| Test naming | `ClassName_MethodName_ShouldBehavior` |
+| Test naming | `EndpointName_Scenario_ExpectedBehavior` |
+| Test organization | Mirror endpoint structure under `Tests/Endpoints/` |
+| Test class pattern | Inherit from `TestsBase`, use `WebApplicationFactory.CreateClient()` |
+| Test assertions | `await Assert.That(value).IsEqualTo(expected)` |
 | Branch naming | `feature/{description}` or `bugfix/{description}` |
 | JSON in EF | Create model class + `OwnsOne(x => x.Prop, b => b.ToJson())` |
 | Commit style | Conventional commits explaining WHY |

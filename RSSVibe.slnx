@@ -9,7 +9,9 @@
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
   </Folder>
-  <Folder Name="/Tests/" />
+  <Folder Name="/Tests/">
+    <Project Path="Tests\RSSVibe.ApiService.Tests\RSSVibe.ApiService.Tests\RSSVibe.ApiService.Tests.csproj" Type="Classic C#" />
+  </Folder>
   <Project Path="src/RSSVibe.ApiService/RSSVibe.ApiService.csproj" />
   <Project Path="src/RSSVibe.AppHost/RSSVibe.AppHost.csproj" />
   <Project Path="src/RSSVibe.Contracts/RSSVibe.Contracts.csproj" />
