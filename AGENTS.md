@@ -134,6 +134,7 @@ dotnet format --verify-no-changes
 | Test assertions | `await Assert.That(value).IsEqualTo(expected)` |
 | Authenticated tests | Use `CreateAuthenticatedClient()` for protected endpoints |
 | Test user email | `TestApplication.TestUserEmail` = `"test@rssvibe.local"` |
+| Service assertions | `await using var scope = WebApplicationFactory.Services.CreateAsyncScope();`<br/>`var service = scope.ServiceProvider.GetRequiredService<Service>();` |
 | GUID generation | MUST use `Guid.CreateVersion7()` (NOT `Guid.NewGuid()`) |
 | JSON in EF | Create model class + `OwnsOne(x => x.Prop, b => b.ToJson())` |
 | Service layer | All business logic in `RSSVibe.Services` project |

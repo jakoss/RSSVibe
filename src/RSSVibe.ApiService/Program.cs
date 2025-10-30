@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Identity;
 using RSSVibe.ApiService.Configuration;
 using RSSVibe.ApiService.Endpoints;
 using RSSVibe.Contracts.Auth;
+using RSSVibe.Data;
+using RSSVibe.Data.Entities;
 using RSSVibe.Data.Extensions;
 using RSSVibe.Services.Auth;
 using RSSVibe.Services.Extensions;
@@ -14,6 +16,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 builder.AddRssVibeDatabase("rssvibedb");
+
+// Add Identity with SignInManager support
+builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
+    .AddEntityFrameworkStores<RssVibeDbContext>()
+    .AddSignInManager<SignInManager<ApplicationUser>>()
+    .AddDefaultTokenProviders();
 
 builder.Services.AddProblemDetails();
 
@@ -27,14 +35,23 @@ builder.Services.Configure<AuthConfiguration>(
 builder.Services.Configure<JwtConfiguration>(
     builder.Configuration.GetSection("Jwt"));
 
-// Configure Identity password policy
+// Configure Identity password and lockout policy
 builder.Services.Configure<IdentityOptions>(options =>
 {
+    // Password requirements
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = true;
     options.Password.RequireNonAlphanumeric = true;
     options.Password.RequiredLength = 12;
+
+    // Lockout settings - protect against brute force attacks
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers = true;
+
+    // User settings
+    options.User.RequireUniqueEmail = true;
 });
 
 // Register all RSSVibe application services

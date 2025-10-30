@@ -1,4 +1,7 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using RSSVibe.Data;
 using RSSVibe.Data.Entities;
 using System.Data.Common;
 
@@ -9,6 +12,9 @@ namespace RSSVibe.Services.Auth;
 /// </summary>
 internal sealed class AuthService(
     UserManager<ApplicationUser> userManager,
+    IJwtTokenGenerator jwtTokenGenerator,
+    RssVibeDbContext dbContext,
+    IOptions<JwtConfiguration> jwtConfig,
     ILogger<AuthService> logger) : IAuthService
 {
     /// <summary>
@@ -102,6 +108,134 @@ internal sealed class AuthService(
             {
                 Success = false,
                 Error = RegistrationError.IdentityStoreUnavailable
+            };
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<LoginResult> LoginAsync(
+        LoginCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Find user by email (normalized by Identity)
+            var user = await userManager.FindByEmailAsync(command.Email);
+            if (user is null)
+            {
+                // Don't reveal that email doesn't exist (prevents enumeration)
+                logger.LogInformation(
+                    "Failed login attempt for non-existent email: {Email}",
+                    AnonymizeEmail(command.Email));
+
+                return new LoginResult
+                {
+                    Success = false,
+                    Error = LoginError.InvalidCredentials
+                };
+            }
+
+            // Check if account is locked out
+            if (await userManager.IsLockedOutAsync(user))
+            {
+                logger.LogWarning(
+                    "Login attempt for locked account: {Email}",
+                    AnonymizeEmail(command.Email));
+
+                return new LoginResult
+                {
+                    Success = false,
+                    Error = LoginError.AccountLocked
+                };
+            }
+
+            // Verify password using UserManager (handles constant-time comparison)
+            var passwordValid = await userManager.CheckPasswordAsync(user, command.Password);
+
+            if (!passwordValid)
+            {
+                // Increment failure count and check for lockout
+                await userManager.AccessFailedAsync(user);
+
+                logger.LogInformation(
+                    "Failed login attempt for email: {Email}",
+                    AnonymizeEmail(command.Email));
+
+                return new LoginResult
+                {
+                    Success = false,
+                    Error = LoginError.InvalidCredentials
+                };
+            }
+
+            // Login successful - generate tokens
+
+            // 1. Generate JWT access token
+            var (accessToken, expiresInSeconds) = jwtTokenGenerator.GenerateAccessToken(user);
+
+            // 2. Generate refresh token
+            var refreshTokenString = jwtTokenGenerator.GenerateRefreshToken();
+
+            // 3. Calculate expiration based on rememberMe flag
+            var config = jwtConfig.Value;
+            var refreshTokenExpiration = command.RememberMe
+                ? DateTime.UtcNow.AddDays(config.RefreshTokenExpirationDays)
+                : DateTime.UtcNow.AddDays(7); // Default 7 days without rememberMe
+
+            // 4. Store refresh token in database
+            var refreshToken = new RefreshToken
+            {
+                Id = Guid.CreateVersion7(),
+                UserId = user.Id,
+                Token = refreshTokenString,
+                ExpiresAt = refreshTokenExpiration,
+                CreatedAt = DateTime.UtcNow,
+                IsUsed = false
+            };
+
+            dbContext.RefreshTokens.Add(refreshToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            // 5. Reset failure count on successful login
+            await userManager.ResetAccessFailedCountAsync(user);
+
+            logger.LogInformation(
+                "Successful login for user: {Email}",
+                AnonymizeEmail(command.Email));
+
+            return new LoginResult
+            {
+                Success = true,
+                AccessToken = accessToken,
+                RefreshToken = refreshTokenString,
+                ExpiresInSeconds = expiresInSeconds,
+                MustChangePassword = user.MustChangePassword
+            };
+        }
+        catch (DbException ex)
+        {
+            logger.LogError(
+                ex,
+                "Database error during login for {Email}",
+                AnonymizeEmail(command.Email));
+
+            return new LoginResult
+            {
+                Success = false,
+                Error = LoginError.IdentityStoreUnavailable
+            };
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Unexpected error during login for {Email}",
+                AnonymizeEmail(command.Email));
+
+            return new LoginResult
+            {
+                Success = false,
+                Error = LoginError.IdentityStoreUnavailable
             };
         }
     }

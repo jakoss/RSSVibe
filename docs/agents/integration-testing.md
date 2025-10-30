@@ -221,6 +221,108 @@ var request = new RegisterRequest(
 
 ---
 
+## Asserting on Registered Services
+
+**You can access any registered service from the DI container to perform assertions on internal state**, such as verifying database changes, cache state, or service behavior.
+
+**Pattern - Access services via WebApplicationFactory.Services**:
+```csharp
+[Test]
+public async Task LoginEndpoint_SuccessfulLogin_ShouldCreateRefreshTokenInDatabase()
+{
+    // Arrange
+    var client = WebApplicationFactory.CreateClient();
+
+    var registerRequest = new RegisterRequest(
+        Email: "dbtest@rssvibe.local",
+        Password: "ValidPassword123!",
+        DisplayName: "DB Test User",
+        MustChangePassword: false
+    );
+    await client.PostAsJsonAsync("/api/v1/auth/register", registerRequest);
+
+    var loginRequest = new LoginRequest(
+        Email: "dbtest@rssvibe.local",
+        Password: "ValidPassword123!",
+        RememberMe: true
+    );
+
+    // Act
+    var response = await client.PostAsJsonAsync("/api/v1/auth/login", loginRequest);
+
+    // Assert - Check HTTP response
+    await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+
+    var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
+    await Assert.That(loginResponse).IsNotNull();
+
+    // Assert - Check database state directly
+    await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<RssVibeDbContext>();
+
+    var refreshToken = await dbContext.RefreshTokens
+        .FirstOrDefaultAsync(rt => rt.Token == loginResponse!.RefreshToken);
+
+    await Assert.That(refreshToken).IsNotNull();
+    await Assert.That(refreshToken!.ExpiresAt).IsGreaterThan(DateTime.UtcNow);
+    await Assert.That(refreshToken.IsUsed).IsFalse();
+}
+```
+
+**Common Use Cases**:
+
+**1. Database State Verification**:
+```csharp
+// Verify entity was created/updated/deleted
+await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
+var dbContext = scope.ServiceProvider.GetRequiredService<RssVibeDbContext>();
+
+var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == "test@example.com");
+await Assert.That(user).IsNotNull();
+await Assert.That(user!.EmailConfirmed).IsTrue();
+```
+
+**2. Service State Verification**:
+```csharp
+// Access service layer to verify internal state
+await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
+var cacheService = scope.ServiceProvider.GetRequiredService<ICacheService>();
+
+var cachedValue = await cacheService.GetAsync<UserProfile>("user:123");
+await Assert.That(cachedValue).IsNotNull();
+```
+
+**3. Multiple Service Access**:
+```csharp
+// Access multiple services in same scope
+await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
+var dbContext = scope.ServiceProvider.GetRequiredService<RssVibeDbContext>();
+var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+var user = await userManager.FindByEmailAsync("test@example.com");
+var loginCount = await dbContext.AuditLogs.CountAsync(a => a.UserId == user!.Id);
+await Assert.That(loginCount).IsGreaterThan(0);
+```
+
+**Important Notes**:
+- **MUST create a scope** using `CreateAsyncScope()` for scoped services (like DbContext)
+- **MUST dispose scope** using `await using` to prevent resource leaks
+- **DO NOT access scoped services directly** from `WebApplicationFactory.Services` without a scope
+- Singleton services can be accessed directly: `WebApplicationFactory.Services.GetRequiredService<ISingletonService>()`
+- Service assertions are performed **after** the HTTP request completes (state reflects endpoint execution)
+
+**Why Use Scopes?**
+```csharp
+// ❌ WRONG: DbContext is scoped, this will throw an exception
+var dbContext = WebApplicationFactory.Services.GetRequiredService<RssVibeDbContext>();
+
+// ✅ CORRECT: Create scope for scoped services
+await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
+var dbContext = scope.ServiceProvider.GetRequiredService<RssVibeDbContext>();
+```
+
+---
+
 ## Configuration Testing
 
 Tests inherit application configuration from `appsettings.json`. To test configuration-dependent scenarios, use `WithWebHostBuilder` to create a customized factory with overridden configuration.

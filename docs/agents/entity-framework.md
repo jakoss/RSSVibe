@@ -86,6 +86,53 @@ builder.OwnsOne(x => x.Selectors, b => b.ToJson());
 
 ---
 
+## Entity Configuration Organization
+
+**MUST create separate configuration classes for each entity**
+
+**Location**: `src/RSSVibe.Data/Configurations/` (note: plural "Configurations")
+
+**Pattern**:
+```csharp
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using RSSVibe.Data.Entities;
+
+namespace RSSVibe.Data.Configurations;
+
+/// <summary>
+/// Entity Framework configuration for MyEntity.
+/// </summary>
+internal sealed class MyEntityConfiguration : IEntityTypeConfiguration<MyEntity>
+{
+    public void Configure(EntityTypeBuilder<MyEntity> builder)
+    {
+        builder.ToTable("MyEntities");
+
+        // Configure properties, indexes, relationships, etc.
+    }
+}
+```
+
+**DbContext Integration**:
+```csharp
+protected override void OnModelCreating(ModelBuilder builder)
+{
+    base.OnModelCreating(builder);
+
+    // Automatically discovers and applies all IEntityTypeConfiguration implementations
+    builder.ApplyConfigurationsFromAssembly(typeof(RssVibeDbContext).Assembly);
+}
+```
+
+**Key Points**:
+- Configuration classes are `internal sealed`
+- Located in `Configurations` folder (plural, not "Configuration")
+- Automatically discovered via `ApplyConfigurationsFromAssembly()`
+- No manual registration needed in DbContext
+
+---
+
 ## Minimal Configuration Approach
 
 **ONLY configure what EF Core cannot infer automatically**

@@ -514,71 +514,82 @@ public sealed class RefreshToken
 - ExpiresAt allows sliding expiration (7 days default, 30 days with rememberMe)
 - RevokedAt and IsUsed support revocation and replay detection
 
-### Step 2: Configure RefreshToken Entity in DbContext
-**Location**: `src/RSSVibe.Data/ApplicationDbContext.cs`
+### Step 2: Configure RefreshToken Entity
+**Location**: `src/RSSVibe.Data/Configurations/RefreshTokenConfiguration.cs`
 
-**Add DbSet**:
+**Create entity configuration class**:
 ```csharp
-public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
-```
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using RSSVibe.Data.Entities;
 
-**Add entity configuration** (in OnModelCreating):
-```csharp
-protected override void OnModelCreating(ModelBuilder modelBuilder)
+namespace RSSVibe.Data.Configurations;
+
+/// <summary>
+/// Entity Framework configuration for RefreshToken entity.
+/// Defines table structure, indexes, and relationships.
+/// </summary>
+internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
 {
-    base.OnModelCreating(modelBuilder);
-
-    // ... existing configurations ...
-
-    // RefreshToken configuration
-    modelBuilder.Entity<RefreshToken>(entity =>
+    public void Configure(EntityTypeBuilder<RefreshToken> builder)
     {
-        entity.ToTable("RefreshTokens");
+        builder.ToTable("RefreshTokens");
 
-        entity.HasKey(rt => rt.Id);
+        // Primary key configuration
+        builder.HasKey(rt => rt.Id);
 
-        entity.Property(rt => rt.Id)
+        builder.Property(rt => rt.Id)
             .ValueGeneratedNever(); // Application generates UUIDv7
 
-        entity.Property(rt => rt.Token)
+        // Token configuration - base64 encoded 64 bytes = ~88 chars, allow headroom
+        builder.Property(rt => rt.Token)
             .IsRequired()
-            .HasMaxLength(512); // Base64 encoded 64 bytes = ~88 chars, allow headroom
+            .HasMaxLength(512);
 
-        entity.Property(rt => rt.ExpiresAt)
+        // Timestamp configurations
+        builder.Property(rt => rt.ExpiresAt)
             .IsRequired();
 
-        entity.Property(rt => rt.CreatedAt)
+        builder.Property(rt => rt.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("now()");
 
-        entity.Property(rt => rt.RevokedAt)
+        builder.Property(rt => rt.RevokedAt)
             .IsRequired(false);
 
-        entity.Property(rt => rt.IsUsed)
+        // IsUsed flag for replay detection
+        builder.Property(rt => rt.IsUsed)
             .IsRequired()
             .HasDefaultValue(false);
 
-        // Unique index on Token for fast lookup and prevent duplicates
-        entity.HasIndex(rt => rt.Token)
+        // Index on Token for fast lookup and prevent duplicates
+        builder.HasIndex(rt => rt.Token)
             .IsUnique()
             .HasDatabaseName("IX_RefreshTokens_Token");
 
         // Index on UserId for querying user's active tokens
-        entity.HasIndex(rt => rt.UserId)
+        builder.HasIndex(rt => rt.UserId)
             .HasDatabaseName("IX_RefreshTokens_UserId");
 
         // Index on ExpiresAt for cleanup job
-        entity.HasIndex(rt => rt.ExpiresAt)
+        builder.HasIndex(rt => rt.ExpiresAt)
             .HasDatabaseName("IX_RefreshTokens_ExpiresAt");
 
-        // Foreign key relationship
-        entity.HasOne(rt => rt.User)
+        // Foreign key relationship to ApplicationUser
+        builder.HasOne(rt => rt.User)
             .WithMany()
             .HasForeignKey(rt => rt.UserId)
-            .OnDelete(DeleteBehavior.Cascade); // Delete tokens when user deleted
-    });
+            .OnDelete(DeleteBehavior.Cascade);
+    }
 }
 ```
+
+**Add DbSet to RssVibeDbContext** (`src/RSSVibe.Data/RssVibeDbContext.cs`):
+```csharp
+public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+```
+
+**Note**: The configuration is automatically discovered and applied via `ApplyConfigurationsFromAssembly()` in `OnModelCreating()`.
 
 ### Step 3: Create Database Migration
 **Command**:

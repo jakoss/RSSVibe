@@ -13,6 +13,7 @@ public sealed class RssVibeDbContext(DbContextOptions<RssVibeDbContext> options)
     public DbSet<FeedParseRun> FeedParseRuns => Set<FeedParseRun>();
     public DbSet<FeedItem> FeedItems => Set<FeedItem>();
     public DbSet<FeedParseRunItem> FeedParseRunItems => Set<FeedParseRunItem>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

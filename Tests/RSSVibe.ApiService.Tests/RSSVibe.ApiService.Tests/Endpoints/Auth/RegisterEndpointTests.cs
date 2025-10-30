@@ -1,6 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using RSSVibe.Contracts.Auth;
+using RSSVibe.Data;
+using RSSVibe.Data.Entities;
 
 namespace RSSVibe.ApiService.Tests.Endpoints.Auth;
 
@@ -25,7 +30,7 @@ public class RegisterEndpointTests : TestsBase
         // Act
         var response = await client.PostAsJsonAsync("/api/v1/auth/register", request);
 
-        // Assert
+        // Assert - HTTP response
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Created);
 
         var responseData = await response.Content.ReadFromJsonAsync<RegisterResponse>();
@@ -37,6 +42,18 @@ public class RegisterEndpointTests : TestsBase
 
         // Verify Location header
         await Assert.That(response.Headers.Location?.ToString()).IsEqualTo("/api/v1/auth/profile");
+
+        // Assert - Database state
+        await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+        var user = await userManager.FindByEmailAsync(request.Email);
+        await Assert.That(user).IsNotNull();
+        await Assert.That(user!.Email).IsEqualTo(request.Email);
+        await Assert.That(user.NormalizedEmail).IsEqualTo(request.Email.ToUpperInvariant());
+        await Assert.That(user.DisplayName).IsEqualTo(request.DisplayName);
+        await Assert.That(user.MustChangePassword).IsEqualTo(request.MustChangePassword);
+        await Assert.That(user.Id).IsEqualTo(responseData!.UserId);
     }
 
     [Test]
@@ -58,8 +75,18 @@ public class RegisterEndpointTests : TestsBase
         // Act - Second registration with same email
         var secondResponse = await client.PostAsJsonAsync("/api/v1/auth/register", request);
 
-        // Assert
+        // Assert - HTTP response
         await Assert.That(secondResponse.StatusCode).IsEqualTo(HttpStatusCode.Conflict);
+
+        // Assert - Database state (only one user should exist)
+        await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<RssVibeDbContext>();
+
+        var users = await dbContext.Users
+            .Where(u => u.Email == request.Email)
+            .ToListAsync();
+
+        await Assert.That(users.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -77,8 +104,15 @@ public class RegisterEndpointTests : TestsBase
         // Act
         var response = await client.PostAsJsonAsync("/api/v1/auth/register", request);
 
-        // Assert
+        // Assert - HTTP response
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+
+        // Assert - Database state (no user should be created)
+        await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+        var user = await userManager.FindByEmailAsync(request.Email);
+        await Assert.That(user).IsNull();
     }
 
     [Test]
@@ -158,7 +192,7 @@ public class RegisterEndpointTests : TestsBase
         foreach (var (password, _) in testCases)
         {
             var request = new RegisterRequest(
-                Email: $"test_{Guid.NewGuid():N}@example.com",
+                Email: $"test_{Guid.CreateVersion7():N}@example.com",
                 Password: password,
                 DisplayName: "Test User",
                 MustChangePassword: false
@@ -187,11 +221,19 @@ public class RegisterEndpointTests : TestsBase
         // Act
         var response = await client.PostAsJsonAsync("/api/v1/auth/register", request);
 
-        // Assert
+        // Assert - HTTP response
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Created);
 
         var responseData = await response.Content.ReadFromJsonAsync<RegisterResponse>();
         await Assert.That(responseData).IsNotNull();
         await Assert.That(responseData!.MustChangePassword).IsTrue();
+
+        // Assert - Database state (flag should be persisted)
+        await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+        var user = await userManager.FindByEmailAsync(request.Email);
+        await Assert.That(user).IsNotNull();
+        await Assert.That(user!.MustChangePassword).IsTrue();
     }
 }

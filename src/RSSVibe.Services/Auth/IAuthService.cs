@@ -12,4 +12,12 @@ public interface IAuthService
     /// <param name="cancellationToken">Cancellation token for the operation.</param>
     /// <returns>Result containing user details on success or error information on failure.</returns>
     Task<RegisterUserResult> RegisterUserAsync(RegisterUserCommand command, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Authenticates user credentials and generates access and refresh tokens.
+    /// </summary>
+    /// <param name="command">Login command containing email, password, and remember me flag.</param>
+    /// <param name="cancellationToken">Cancellation token for the operation.</param>
+    /// <returns>Result containing tokens on success or error information on failure.</returns>
+    Task<LoginResult> LoginAsync(LoginCommand command, CancellationToken cancellationToken = default);
 }
