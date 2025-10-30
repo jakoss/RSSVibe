@@ -12,6 +12,49 @@
 
 ---
 
+## GUID Primary Keys
+
+**MUST use `Guid.CreateVersion7()` for all GUID generation** (NOT `Guid.NewGuid()`)
+
+**Why Version 7 GUIDs?**
+- Time-ordered (sequential) - better database performance
+- Improved indexing and clustering in PostgreSQL
+- Reduces index fragmentation
+- Better page splits behavior
+
+**Entity Configuration**:
+```csharp
+public class ApplicationUser
+{
+    public Guid Id { get; init; }  // Don't set default value here
+    // ... other properties
+}
+
+// In entity configuration
+builder.HasKey(x => x.Id);
+builder.Property(x => x.Id).ValueGeneratedNever();  // Application controls GUID generation
+```
+
+**Creating Entities**:
+```csharp
+// ✅ CORRECT: Use CreateVersion7()
+var user = new ApplicationUser
+{
+    Id = Guid.CreateVersion7(),  // Time-ordered GUID
+    Email = "user@example.com",
+    // ...
+};
+
+// ❌ WRONG: Don't use NewGuid()
+var user = new ApplicationUser
+{
+    Id = Guid.NewGuid(),  // Random GUID - worse performance
+    // ...
+};
+```
+
+---
+
 ## Type-Safe JSON Properties (CRITICAL)
 
 **NEVER use string properties for JSON data**

@@ -132,6 +132,9 @@ dotnet format --verify-no-changes
 | Test naming | `EndpointName_Scenario_ExpectedBehavior` |
 | Test organization | Mirror endpoint structure under `Tests/Endpoints/` |
 | Test assertions | `await Assert.That(value).IsEqualTo(expected)` |
+| Authenticated tests | Use `CreateAuthenticatedClient()` for protected endpoints |
+| Test user email | `TestApplication.TestUserEmail` = `"test@rssvibe.local"` |
+| GUID generation | MUST use `Guid.CreateVersion7()` (NOT `Guid.NewGuid()`) |
 | JSON in EF | Create model class + `OwnsOne(x => x.Prop, b => b.ToJson())` |
 | Service layer | All business logic in `RSSVibe.Services` project |
 | Service pattern | Interface + implementation with command/result types |

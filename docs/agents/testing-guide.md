@@ -84,7 +84,7 @@ await Assert.That(response.Headers.Location?.ToString()).IsEqualTo("/api/v1/auth
 **DO**:
 - ✅ Test one scenario per test method
 - ✅ Use descriptive test names that explain the scenario
-- ✅ Use unique identifiers (GUIDs) to avoid test conflicts
+- ✅ Use unique identifiers (`Guid.CreateVersion7()`) to avoid test conflicts
 - ✅ Test actual HTTP responses, not internal implementation details
 - ✅ Verify response status codes, headers, and body content
 - ✅ Test validation rules comprehensively

@@ -36,7 +36,7 @@ internal sealed class AuthService(
         // Create new user entity with required properties
         var user = new ApplicationUser
         {
-            Id = Guid.NewGuid(),
+            Id = Guid.CreateVersion7(),
             UserName = command.Email,
             Email = command.Email,
             DisplayName = command.DisplayName,

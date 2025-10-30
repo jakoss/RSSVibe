@@ -208,17 +208,17 @@ Map to RegisterResponse with Location header
 
 ### Data Validation & Sanitization
 - **Email Validation**:
-  - Format validation via FluentValidation
-  - Normalization handled by ASP.NET Identity (uppercase invariant)
-  - Uniqueness check via UserManager
+    - Format validation via FluentValidation
+    - Normalization handled by ASP.NET Identity (uppercase invariant)
+    - Uniqueness check via UserManager
 - **Password Security**:
-  - Minimum 12 characters
-  - Complexity: uppercase, lowercase, digit, special character
-  - Hashed using ASP.NET Identity's password hasher (PBKDF2)
-  - Never stored in plain text or logged
+    - Minimum 12 characters
+    - Complexity: uppercase, lowercase, digit, special character
+    - Hashed using ASP.NET Identity's password hasher (PBKDF2)
+    - Never stored in plain text or logged
 - **Display Name**:
-  - Required field, no special sanitization needed (stored as-is)
-  - Consider max length constraint (future enhancement)
+    - Required field, no special sanitization needed (stored as-is)
+    - Consider max length constraint (future enhancement)
 
 ### Security Threats & Mitigations
 
@@ -349,15 +349,15 @@ All errors follow RFC 9110 Problem Details format (already configured via `build
 
 ### Potential Bottlenecks
 1. **Password Hashing**: Intentionally slow (PBKDF2 with 100k iterations)
-   - Expected: 50-100ms per request
-   - Acceptable for registration (infrequent operation)
+    - Expected: 50-100ms per request
+    - Acceptable for registration (infrequent operation)
 
 2. **Database Round Trips**: Two queries (check existence + insert)
-   - Optimizable by trying insert and catching unique constraint violation
-   - Current approach preferred for better error messages
+    - Optimizable by trying insert and catching unique constraint violation
+    - Current approach preferred for better error messages
 
 3. **Email Normalization**: Done by ASP.NET Identity
-   - Minimal performance impact
+    - Minimal performance impact
 
 ### Optimization Strategies
 - **No caching needed**: Registration is write-heavy, not read-heavy
@@ -545,11 +545,11 @@ public static class RegisterEndpoint
 2. Map RegisterRequest to RegisterUserCommand
 3. Call `authService.RegisterUserAsync(command)`
 4. Handle result cases using TypedResults:
-   - Success: Return `TypedResults.Created()` with Location header
-   - EmailAlreadyExists: Return `TypedResults.Problem()` with 409 status
-   - InvalidPassword: Return `TypedResults.Problem()` with 400 status
-   - IdentityStoreUnavailable: Return `TypedResults.Problem()` with 503 status
-   - Registration disabled: Return `TypedResults.Forbid()`
+    - Success: Return `TypedResults.Created()` with Location header
+    - EmailAlreadyExists: Return `TypedResults.Problem()` with 409 status
+    - InvalidPassword: Return `TypedResults.Problem()` with 400 status
+    - IdentityStoreUnavailable: Return `TypedResults.Problem()` with 503 status
+    - Registration disabled: Return `TypedResults.Forbid()`
 5. Log outcomes appropriately
 
 **Example implementation**:

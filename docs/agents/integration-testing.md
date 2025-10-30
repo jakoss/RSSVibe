@@ -18,6 +18,66 @@ RSSVibe uses a **real integration testing approach** with actual database and se
 
 ---
 
+## Authenticated Test User
+
+**Test Infrastructure provides a pre-configured authenticated user** for testing protected endpoints.
+
+**Test User Details** (created during `TestApplication.InitializeAsync()`):
+- **Email**: `TestApplication.TestUserEmail` = `"test@rssvibe.local"`
+- **Password**: `TestApplication.TestUserPassword` = `"TestPassword123!"`
+- **Display Name**: `TestApplication.TestUserDisplayName` = `"Test User"`
+- **JWT Token**: `TestApplication.TestUserBearerToken` (automatically generated)
+
+**Creating Authenticated Requests**:
+
+```csharp
+// Use CreateAuthenticatedClient() for protected endpoints
+var client = CreateAuthenticatedClient();
+var response = await client.GetAsync("/api/v1/protected-endpoint");
+
+// Use CreateClient() for public/anonymous endpoints
+var client = WebApplicationFactory.CreateClient();
+var response = await client.PostAsJsonAsync("/api/v1/auth/register", request);
+```
+
+**Testing Authentication Scenarios**:
+
+```csharp
+[Test]
+public async Task ProtectedEndpoint_WithValidToken_ShouldReturnSuccess()
+{
+    // Arrange - Use authenticated client
+    var client = CreateAuthenticatedClient();
+
+    // Act
+    var response = await client.GetAsync("/api/v1/user/profile");
+
+    // Assert
+    await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+}
+
+[Test]
+public async Task ProtectedEndpoint_WithoutToken_ShouldReturnUnauthorized()
+{
+    // Arrange - Use unauthenticated client
+    var client = WebApplicationFactory.CreateClient();
+
+    // Act
+    var response = await client.GetAsync("/api/v1/user/profile");
+
+    // Assert
+    await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
+}
+```
+
+**Important Notes**:
+- Test user is created once per test session (shared across all tests)
+- JWT token is valid for 60 minutes in test environment
+- DO NOT modify the test user in tests (read-only usage)
+- For testing user-specific scenarios, create additional test users with unique credentials
+
+---
+
 ## Test File Organization
 
 **Pattern**: Mirror the endpoint folder structure under `Tests/` directory
@@ -117,9 +177,10 @@ For each endpoint, SHOULD test the following scenarios (where applicable):
 - Business rule violations
 
 **3. Authentication/Authorization** (401/403):
-- Unauthenticated requests
+- Unauthenticated requests (use `WebApplicationFactory.CreateClient()`)
+- Authenticated requests (use `CreateAuthenticatedClient()`)
 - Insufficient permissions
-- Expired tokens
+- Expired/invalid tokens
 
 **4. Resource States** (404/409):
 - Resource not found
@@ -141,9 +202,9 @@ For each endpoint, SHOULD test the following scenarios (where applicable):
 
 **Example**:
 ```csharp
-// Good: Unique email per test
+// Good: Unique email per test using version 7 GUIDs (time-ordered)
 var request = new RegisterRequest(
-    Email: $"test_{Guid.NewGuid():N}@example.com",
+    Email: $"test_{Guid.CreateVersion7():N}@example.com",
     Password: "SecurePass123!",
     DisplayName: "Test User",
     MustChangePassword: false
@@ -155,6 +216,8 @@ var request = new RegisterRequest(
     // ...
 );
 ```
+
+**Important**: Always use `Guid.CreateVersion7()` instead of `Guid.NewGuid()` for better database performance (time-ordered GUIDs improve indexing and clustering).
 
 ---
 

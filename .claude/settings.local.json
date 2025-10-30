@@ -4,7 +4,9 @@
       "Bash(dotnet build:*)",
       "Bash(bash:*)",
       "Bash(bash src/RSSVibe.Data/add_migration.sh *)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet test:*)"
     ],
     "deny": [],
     "ask": []

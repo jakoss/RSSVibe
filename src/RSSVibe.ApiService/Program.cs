@@ -4,6 +4,7 @@ using RSSVibe.ApiService.Configuration;
 using RSSVibe.ApiService.Endpoints;
 using RSSVibe.Contracts.Auth;
 using RSSVibe.Data.Extensions;
+using RSSVibe.Services.Auth;
 using RSSVibe.Services.Extensions;
 using Scalar.AspNetCore;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
@@ -21,6 +22,10 @@ builder.Services.AddOpenApi();
 // Configure authentication settings
 builder.Services.Configure<AuthConfiguration>(
     builder.Configuration.GetSection("Auth"));
+
+// Configure JWT settings
+builder.Services.Configure<JwtConfiguration>(
+    builder.Configuration.GetSection("Jwt"));
 
 // Configure Identity password policy
 builder.Services.Configure<IdentityOptions>(options =>

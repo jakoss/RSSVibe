@@ -16,6 +16,7 @@ public static class ServiceCollectionExtensions
     {
         // Register auth services
         services.AddScoped<IAuthService, AuthService>();
+        services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
         // Future services will be added here
         // services.AddScoped<IFeedService, FeedService>();
