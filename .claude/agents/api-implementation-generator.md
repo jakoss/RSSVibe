@@ -49,6 +49,8 @@ Now perform the following steps to implement the REST API endpoint:
 4. Testing considerations:
     - Consider edge cases and potential issues that should be tested.
     - Ensure the implementation covers all scenarios mentioned in the plan.
+    - Implement integration tests for the endpoint.
+    - Ensure the new and existing tests pass.
 
 5. Documentation:
     - Add clear comments to explain complex logic or important decisions

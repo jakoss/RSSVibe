@@ -12,6 +12,6 @@
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003APostgresContainerImageTags_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2025_002E2_003Fresharper_002Dhost_003FSourcesCache_003F84a7461f8bb08664a851a4159663b3a3c64d2c63919c3c111fac85063906382_003FPostgresContainerImageTags_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=9b3164ff_002D8c5d_002D46c7_002Dba0b_002Da578d9e42a01/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="RegisterEndpoint_WithDuplicateEmail_ShouldReturnConflict" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;TestAncestor&gt;
-    &lt;TestId&gt;Testing Platform::1124E390-C949-A815-48FA-D497169C8C1C::net9.0::RSSVibe.ApiService.Tests.Endpoints.Auth.RegisterEndpointTests&lt;/TestId&gt;
+    &lt;TestId&gt;Testing Platform::7F5CC691-1098-6B7F-1FFD-0747A4D30F70::net9.0::RSSVibe.ApiService.Tests.Endpoints.Auth.RefreshEndpointTests&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

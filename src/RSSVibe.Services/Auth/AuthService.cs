@@ -240,6 +240,160 @@ internal sealed class AuthService(
         }
     }
 
+    /// <inheritdoc />
+    public async Task<RefreshTokenResult> RefreshTokenAsync(
+        RefreshTokenCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // 1. Look up token (note: User navigation property won't be loaded due to AddIdentityCore)
+            var refreshToken = await dbContext.RefreshTokens
+                .FirstOrDefaultAsync(rt => rt.Token == command.RefreshToken, cancellationToken);
+
+            // 2. Validate token existence
+            if (refreshToken is null)
+            {
+                logger.LogInformation("Refresh attempt with non-existent token");
+                return new RefreshTokenResult { Success = false, Error = RefreshTokenError.TokenInvalid };
+            }
+
+            // 3. Load user separately (AddIdentityCore doesn't configure EF navigation properties)
+            // We query directly from DbContext instead of UserManager for better reliability
+            var user = await dbContext.Users
+                .FirstOrDefaultAsync(u => u.Id == refreshToken.UserId, cancellationToken);
+
+            if (user is null)
+            {
+                logger.LogError(
+                    "User {UserId} not found for refresh token {TokenId}",
+                    refreshToken.UserId,
+                    refreshToken.Id);
+                return new RefreshTokenResult { Success = false, Error = RefreshTokenError.TokenInvalid };
+            }
+
+            // 4. Validate token expiration
+            if (refreshToken.ExpiresAt < DateTime.UtcNow)
+            {
+                logger.LogInformation("Refresh attempt with expired token for user: {UserId}", refreshToken.UserId);
+                return new RefreshTokenResult { Success = false, Error = RefreshTokenError.TokenInvalid };
+            }
+
+            // 5. Validate token not revoked
+            if (refreshToken.RevokedAt is not null)
+            {
+                logger.LogInformation("Refresh attempt with revoked token for user: {UserId}", refreshToken.UserId);
+                return new RefreshTokenResult { Success = false, Error = RefreshTokenError.TokenInvalid };
+            }
+
+            // 6. CRITICAL: Check for replay attack
+            if (refreshToken.IsUsed)
+            {
+                logger.LogWarning(
+                    "SECURITY: Token replay detected for user {UserId}. Revoking all tokens.",
+                    refreshToken.UserId);
+
+                // Revoke all user tokens
+                await dbContext.RefreshTokens
+                    .Where(rt => rt.UserId == refreshToken.UserId && rt.RevokedAt == null)
+                    .ExecuteUpdateAsync(
+                        rt => rt.SetProperty(x => x.RevokedAt, DateTime.UtcNow),
+                        cancellationToken);
+
+                return new RefreshTokenResult
+                {
+                    Success = false,
+                    Error = RefreshTokenError.TokenReplayDetected
+                };
+            }
+
+            // 7. Use execution strategy for PostgreSQL transaction handling with state to avoid closures
+            // Note: ExecuteInTransactionAsync would be ideal but doesn't support returning values with Npgsql
+            var strategy = dbContext.Database.CreateExecutionStrategy();
+            var state = (refreshToken, user, jwtTokenGenerator, dbContext, logger);
+
+            return await strategy.ExecuteAsync(
+                state,
+                static async (state, ct) =>
+                {
+                    var (refreshToken, user, jwtTokenGenerator, dbContext, logger) = state;
+
+                    await using var transaction = await dbContext.Database.BeginTransactionAsync(ct);
+
+                    try
+                    {
+                        // 8. Mark old token as used
+                        refreshToken.IsUsed = true;
+
+                        // 9. Generate new access token
+                        var (accessToken, expiresInSeconds) = jwtTokenGenerator.GenerateAccessToken(user);
+
+                        // 10. Generate new refresh token
+                        var newRefreshTokenString = jwtTokenGenerator.GenerateRefreshToken();
+
+                        // 11. Calculate new refresh token expiration (sliding window)
+                        var newExpiration = DateTime.UtcNow.AddDays(
+                            (refreshToken.ExpiresAt - refreshToken.CreatedAt).TotalDays);
+
+                        // 12. Create new refresh token entity
+                        var newRefreshToken = new RefreshToken
+                        {
+                            Id = Guid.CreateVersion7(),
+                            UserId = refreshToken.UserId,
+                            Token = newRefreshTokenString,
+                            ExpiresAt = newExpiration,
+                            CreatedAt = DateTime.UtcNow,
+                            IsUsed = false
+                        };
+
+                        dbContext.RefreshTokens.Add(newRefreshToken);
+
+                        // 13. Save changes and commit transaction
+                        await dbContext.SaveChangesAsync(ct);
+                        await transaction.CommitAsync(ct);
+
+                        logger.LogInformation(
+                            "Token refreshed successfully for user: {UserId}",
+                            refreshToken.UserId);
+
+                        // 14. Return success result
+                        return new RefreshTokenResult
+                        {
+                            Success = true,
+                            AccessToken = accessToken,
+                            RefreshToken = newRefreshTokenString,
+                            ExpiresInSeconds = expiresInSeconds,
+                            MustChangePassword = user.MustChangePassword
+                        };
+                    }
+                    catch
+                    {
+                        await transaction.RollbackAsync(ct);
+                        throw;
+                    }
+                },
+                cancellationToken);
+        }
+        catch (DbException ex)
+        {
+            logger.LogError(ex, "Database error during token refresh");
+            return new RefreshTokenResult
+            {
+                Success = false,
+                Error = RefreshTokenError.ServiceUnavailable
+            };
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error during token refresh");
+            return new RefreshTokenResult
+            {
+                Success = false,
+                Error = RefreshTokenError.ServiceUnavailable
+            };
+        }
+    }
+
     /// <summary>
     /// Anonymizes an email address for logging purposes (e.g., "u***@example.com").
     /// </summary>

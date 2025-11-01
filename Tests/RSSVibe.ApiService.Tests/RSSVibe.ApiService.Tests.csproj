@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\src\RSSVibe.ApiService\RSSVibe.ApiService.csproj" />
+      <ProjectReference Include="..\..\src\RSSVibe.ApiService\RSSVibe.ApiService.csproj" />
     </ItemGroup>
 
     <ItemGroup>

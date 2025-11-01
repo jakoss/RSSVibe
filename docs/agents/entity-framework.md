@@ -158,6 +158,131 @@ protected override void OnModelCreating(ModelBuilder builder)
 
 ---
 
+## Transaction Handling with PostgreSQL
+
+**CRITICAL: MUST use execution strategy for all manual transactions in PostgreSQL**
+
+PostgreSQL provider requires wrapping transactions in an execution strategy for proper retry handling and transaction management.
+
+### Pattern: Execution Strategy with Transactions
+
+✅ **CORRECT** (recommended - with state parameters to avoid closures):
+```csharp
+// 1. Create execution strategy from DbContext
+var strategy = dbContext.Database.CreateExecutionStrategy();
+
+// 2. Prepare state tuple to avoid closures
+var state = (entity, newEntity, dbContext, logger);
+
+// 3. Use ExecuteAsync with state parameters
+return await strategy.ExecuteAsync(
+    state,
+    static async (state, ct) =>
+    {
+        var (entity, newEntity, dbContext, logger) = state;
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(ct);
+
+        try
+        {
+            // Perform operations
+            entity.SomeProperty = newValue;
+            dbContext.SomeEntities.Add(newEntity);
+
+            await dbContext.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+
+            logger.LogInformation("Transaction completed successfully");
+            return successResult;
+        }
+        catch
+        {
+            await transaction.RollbackAsync(ct);
+            throw;
+        }
+    },
+    cancellationToken);
+```
+
+✅ **ALSO CORRECT** (without state parameters - uses closures):
+```csharp
+var strategy = dbContext.Database.CreateExecutionStrategy();
+
+return await strategy.ExecuteAsync(async () =>
+{
+    await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+    try
+    {
+        // Perform operations
+        entity.SomeProperty = newValue;
+        dbContext.SomeEntities.Add(newEntity);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        return successResult;
+    }
+    catch
+    {
+        await transaction.RollbackAsync(cancellationToken);
+        throw;
+    }
+});
+```
+
+❌ **WRONG** (will cause issues in PostgreSQL):
+```csharp
+// Don't use transactions directly without execution strategy
+await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+try
+{
+    // operations...
+    await transaction.CommitAsync(cancellationToken);
+}
+catch
+{
+    await transaction.RollbackAsync(cancellationToken);
+    throw;
+}
+```
+
+### Why Execution Strategy?
+
+- **PostgreSQL-specific requirement**: The Npgsql provider needs execution strategy for transaction retry logic
+- **Handles transient failures**: Automatically retries on connection issues
+- **Prevents deadlocks**: Proper transaction scope management
+- **Testing compatibility**: Works correctly in test scenarios with in-memory database state
+
+### Best Practices
+
+**Always use state parameters to avoid closures**:
+- Pass dependencies as state tuple
+- Use `static async` lambda to prevent accidental closure capture
+- Improves performance by avoiding closure allocations
+- Makes dependencies explicit
+
+**Use ExecuteAsync with manual transactions when returning values**:
+- `ExecuteInTransactionAsync` is ideal for void operations (no return value)
+- For operations that return results, use `ExecuteAsync` with manual transaction handling
+- Always wrap in `await using var transaction` with try-catch-rollback pattern
+- Use `await using` for proper async disposal of IAsyncDisposable resources
+- This is the recommended approach for PostgreSQL with Npgsql provider
+
+### When to Use
+
+MUST use execution strategy when:
+- Creating manual transactions with `BeginTransactionAsync()`
+- Performing multiple operations that must be atomic
+- Implementing complex business logic requiring rollback capability
+
+NOT needed for:
+- Simple `SaveChangesAsync()` calls (already wrapped in implicit transaction)
+- Read-only operations
+- Single entity modifications
+
+---
+
 ## Migration Management
 
 **MUST use the migration script**: `src/RSSVibe.Data/add_migration.sh`

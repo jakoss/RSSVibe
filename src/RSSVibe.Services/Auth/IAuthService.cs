@@ -20,4 +20,14 @@ public interface IAuthService
     /// <param name="cancellationToken">Cancellation token for the operation.</param>
     /// <returns>Result containing tokens on success or error information on failure.</returns>
     Task<LoginResult> LoginAsync(LoginCommand command, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Refreshes access token using refresh token with replay attack detection.
+    /// </summary>
+    /// <param name="command">Refresh token command.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result containing new tokens or error information.</returns>
+    Task<RefreshTokenResult> RefreshTokenAsync(
+        RefreshTokenCommand command,
+        CancellationToken cancellationToken = default);
 }

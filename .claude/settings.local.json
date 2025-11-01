@@ -6,7 +6,11 @@
       "Bash(bash src/RSSVibe.Data/add_migration.sh *)",
       "Bash(cat:*)",
       "Bash(dotnet add:*)",
-      "Bash(dotnet test:*)"
+      "Bash(dotnet test:*)",
+      "Bash(mkdir:*)",
+      "Bash(ASPNETCORE_ENVIRONMENT=Development dotnet test:*)",
+      "mcp__microsoft_docs_mcp__microsoft_docs_search",
+      "Bash(dotnet --info:*)"
     ],
     "deny": [],
     "ask": []

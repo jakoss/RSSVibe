@@ -17,9 +17,7 @@ public static class AuthGroup
         // Register all endpoints in the auth group
         group.MapRegisterEndpoint();
         group.MapLoginEndpoint();
-
-        // Future auth endpoints can be added here
-        // group.MapRefreshTokenEndpoint();
+        group.MapRefreshEndpoint();
 
         return endpoints;
     }
