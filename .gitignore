@@ -66,3 +66,4 @@ nunit-*.xml
 **/.idea/**/projectSettingsUpdater.xml
 **/.idea/**/protoeditor.xml
 **/.idea/**/copilot.data.migration.*.xml
+*.DotSettings.user
