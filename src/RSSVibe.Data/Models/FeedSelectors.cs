@@ -2,12 +2,11 @@ namespace RSSVibe.Data.Models;
 
 public sealed class FeedSelectors
 {
-    public required string ItemContainer { get; init; }
-    public required string Title { get; init; }
-    public required string Link { get; init; }
-    public string? Description { get; init; }
-    public string? PublishedDate { get; init; }
-    public string? Author { get; init; }
-    public string? Image { get; init; }
-    public Dictionary<string, string>? CustomSelectors { get; init; }
+    public string? ItemContainer { get; set; }
+    public string? Title { get; set; }
+    public string? Link { get; set; }
+    public string? Description { get; set; }
+    public string? PublishedDate { get; set; }
+    public string? Author { get; set; }
+    public string? Image { get; set; }
 }

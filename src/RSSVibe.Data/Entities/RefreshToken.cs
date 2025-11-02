@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-
 namespace RSSVibe.Data.Entities;
 
 /// <summary>

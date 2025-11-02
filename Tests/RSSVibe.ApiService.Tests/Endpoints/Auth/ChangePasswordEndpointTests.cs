@@ -1,11 +1,11 @@
-using System.Net;
-using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RSSVibe.ApiService.Tests.Infrastructure;
 using RSSVibe.Contracts.Auth;
 using RSSVibe.Data;
+using System.Net;
+using System.Net.Http.Json;
 
 namespace RSSVibe.ApiService.Tests.Endpoints.Auth;
 

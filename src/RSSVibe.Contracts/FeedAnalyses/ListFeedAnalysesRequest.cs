@@ -22,10 +22,10 @@ public sealed record ListFeedAnalysesRequest(
 
             RuleFor(x => x.Sort)
                 .Must(x => x is null ||
-                    x.Equals("createdAt:asc", System.StringComparison.OrdinalIgnoreCase) ||
-                    x.Equals("createdAt:desc", System.StringComparison.OrdinalIgnoreCase) ||
-                    x.Equals("updatedAt:asc", System.StringComparison.OrdinalIgnoreCase) ||
-                    x.Equals("updatedAt:desc", System.StringComparison.OrdinalIgnoreCase))
+                    x.Equals("createdAt:asc", StringComparison.OrdinalIgnoreCase) ||
+                    x.Equals("createdAt:desc", StringComparison.OrdinalIgnoreCase) ||
+                    x.Equals("updatedAt:asc", StringComparison.OrdinalIgnoreCase) ||
+                    x.Equals("updatedAt:desc", StringComparison.OrdinalIgnoreCase))
                 .WithMessage("Sort must be one of: createdAt:asc, createdAt:desc, updatedAt:asc, updatedAt:desc");
 
             RuleFor(x => x.Skip)

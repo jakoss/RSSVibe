@@ -9,5 +9,4 @@ public sealed class HttpResponseHeaders
     public string? Expires { get; init; }
     public int? ContentLength { get; init; }
     public string? Server { get; init; }
-    public Dictionary<string, string>? CustomHeaders { get; init; }
 }

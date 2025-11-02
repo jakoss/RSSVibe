@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
 using RSSVibe.Contracts.Auth;
 using RSSVibe.Services.Auth;
+using System.Security.Claims;
 
 namespace RSSVibe.ApiService.Endpoints.Auth;
 

@@ -14,6 +14,8 @@ internal sealed class FeedAnalysisConfiguration : IEntityTypeConfiguration<FeedA
 
         builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
 
+        builder.Property(x => x.PreflightChecks).HasConversion<int>();
+
         builder.OwnsOne(x => x.PreflightDetails, detailsBuilder =>
         {
             detailsBuilder.ToJson();

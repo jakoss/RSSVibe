@@ -1,5 +1,3 @@
-using System.Net;
-using System.Net.Http.Json;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using RSSVibe.Contracts.Auth;
 using RSSVibe.Data;
 using RSSVibe.Data.Entities;
+using System.Net;
+using System.Net.Http.Json;
 
 namespace RSSVibe.ApiService.Tests.Endpoints.Auth;
 
@@ -185,7 +185,7 @@ public class LoginEndpointTests : TestsBase
             RememberMe: false
         );
 
-        for (int i = 0; i < 5; i++)
+        for (var i = 0; i < 5; i++)
         {
             await client.PostAsJsonAsync("/api/v1/auth/login", wrongLoginRequest);
         }
@@ -316,7 +316,7 @@ public class LoginEndpointTests : TestsBase
             RememberMe: false
         );
 
-        for (int i = 0; i < 3; i++)
+        for (var i = 0; i < 3; i++)
         {
             await client.PostAsJsonAsync("/api/v1/auth/login", wrongLoginRequest);
         }
@@ -340,7 +340,7 @@ public class LoginEndpointTests : TestsBase
         await Assert.That(user.AccessFailedCount).IsEqualTo(0);
 
         // Make 3 more failed attempts - should NOT be locked yet (failure count was reset)
-        for (int i = 0; i < 3; i++)
+        for (var i = 0; i < 3; i++)
         {
             var response = await client.PostAsJsonAsync("/api/v1/auth/login", wrongLoginRequest);
             // Should still return 401, not 423 (locked)

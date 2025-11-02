@@ -1,11 +1,11 @@
-using System.Net;
-using System.Net.Http.Json;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RSSVibe.Contracts.Auth;
 using RSSVibe.Data;
 using RSSVibe.Data.Entities;
+using System.Net;
+using System.Net.Http.Json;
 
 namespace RSSVibe.ApiService.Tests.Endpoints.Auth;
 
@@ -168,7 +168,7 @@ public class RegisterEndpointTests : TestsBase
         // Act
         var response = await client.PostAsJsonAsync("/api/v1/auth/register", request);
 
-        var body = await response.Content.ReadAsStringAsync();
+        _ = await response.Content.ReadAsStringAsync();
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
     }

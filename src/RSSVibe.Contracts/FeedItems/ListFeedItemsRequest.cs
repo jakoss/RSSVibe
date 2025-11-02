@@ -28,12 +28,12 @@ public sealed record ListFeedItemsRequest(
 
             RuleFor(x => x.Sort)
                 .Must(x => x is null ||
-                    x.Equals("publishedAt:asc", System.StringComparison.OrdinalIgnoreCase) ||
-                    x.Equals("publishedAt:desc", System.StringComparison.OrdinalIgnoreCase) ||
-                    x.Equals("discoveredAt:asc", System.StringComparison.OrdinalIgnoreCase) ||
-                    x.Equals("discoveredAt:desc", System.StringComparison.OrdinalIgnoreCase) ||
-                    x.Equals("lastSeenAt:asc", System.StringComparison.OrdinalIgnoreCase) ||
-                    x.Equals("lastSeenAt:desc", System.StringComparison.OrdinalIgnoreCase))
+                    x.Equals("publishedAt:asc", StringComparison.OrdinalIgnoreCase) ||
+                    x.Equals("publishedAt:desc", StringComparison.OrdinalIgnoreCase) ||
+                    x.Equals("discoveredAt:asc", StringComparison.OrdinalIgnoreCase) ||
+                    x.Equals("discoveredAt:desc", StringComparison.OrdinalIgnoreCase) ||
+                    x.Equals("lastSeenAt:asc", StringComparison.OrdinalIgnoreCase) ||
+                    x.Equals("lastSeenAt:desc", StringComparison.OrdinalIgnoreCase))
                 .WithMessage("Sort must be one of: publishedAt, discoveredAt, lastSeenAt with :asc or :desc");
 
             RuleFor(x => x.ChangeKind)

@@ -12,7 +12,7 @@ public sealed class FeedAnalysis : IAuditableEntity
     public FeedAnalysisStatus AnalysisStatus { get; set; }
     public FeedPreflightChecks PreflightChecks { get; set; }
     public required FeedPreflightDetails PreflightDetails { get; set; }
-    public FeedSelectors? Selectors { get; set; }
+    public required FeedSelectors Selectors { get; set; } = new();
     public string[] Warnings { get; set; } = [];
     public string? AiModel { get; set; }
     public Guid? ApprovedFeedId { get; set; }

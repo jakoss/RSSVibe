@@ -13,8 +13,8 @@ using RSSVibe.Data;
 namespace RSSVibe.Data.Migrations
 {
     [DbContext(typeof(RssVibeDbContext))]
-    [Migration("20251030222302_AddRefreshTokenEntity")]
-    partial class AddRefreshTokenEntity
+    [Migration("20251102204712_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -169,6 +169,9 @@ namespace RSSVibe.Data.Migrations
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("DisplayName")
                         .IsRequired()
@@ -341,9 +344,8 @@ namespace RSSVibe.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("PreflightChecks")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("PreflightChecks")
+                        .HasColumnType("integer");
 
                     b.Property<string>("TargetUrl")
                         .IsRequired()
@@ -579,6 +581,9 @@ namespace RSSVibe.Data.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("IX_RefreshTokens_UserId");
 
+                    b.HasIndex("UserId", "RevokedAt")
+                        .HasDatabaseName("IX_RefreshTokens_UserId_RevokedAt");
+
                     b.ToTable("RefreshTokens", (string)null);
                 });
 
@@ -664,18 +669,15 @@ namespace RSSVibe.Data.Migrations
                                 .HasColumnType("text");
 
                             b1.Property<string>("ItemContainer")
-                                .IsRequired()
                                 .HasColumnType("text");
 
                             b1.Property<string>("Link")
-                                .IsRequired()
                                 .HasColumnType("text");
 
                             b1.Property<string>("PublishedDate")
                                 .HasColumnType("text");
 
                             b1.Property<string>("Title")
-                                .IsRequired()
                                 .HasColumnType("text");
 
                             b1.HasKey("FeedId");
@@ -720,18 +722,15 @@ namespace RSSVibe.Data.Migrations
                                 .HasColumnType("text");
 
                             b1.Property<string>("ItemContainer")
-                                .IsRequired()
                                 .HasColumnType("text");
 
                             b1.Property<string>("Link")
-                                .IsRequired()
                                 .HasColumnType("text");
 
                             b1.Property<string>("PublishedDate")
                                 .HasColumnType("text");
 
                             b1.Property<string>("Title")
-                                .IsRequired()
                                 .HasColumnType("text");
 
                             b1.HasKey("FeedAnalysisId");
@@ -749,8 +748,9 @@ namespace RSSVibe.Data.Migrations
                             b1.Property<Guid>("FeedAnalysisId")
                                 .HasColumnType("uuid");
 
-                            b1.Property<Dictionary<string, string>>("AdditionalInfo")
-                                .HasColumnType("hstore");
+                            b1.Property<string>("AdditionalInfo")
+                                .IsRequired()
+                                .HasColumnType("text");
 
                             b1.Property<string>("ErrorMessage")
                                 .HasColumnType("text");
@@ -783,7 +783,8 @@ namespace RSSVibe.Data.Migrations
                     b.Navigation("PreflightDetails")
                         .IsRequired();
 
-                    b.Navigation("Selectors");
+                    b.Navigation("Selectors")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("RSSVibe.Data.Entities.FeedItem", b =>

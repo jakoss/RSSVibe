@@ -8,7 +8,7 @@ public class PostgresTestContainer : IAsyncInitializer, IAsyncDisposable
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
         .WithImage("library/postgres:18")
         .Build();
-    
+
     public string ConnectionString => _container.GetConnectionString();
 
     public async Task InitializeAsync()

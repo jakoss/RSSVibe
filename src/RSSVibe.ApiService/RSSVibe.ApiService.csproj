@@ -17,7 +17,8 @@
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
-      <PackageReference Include="Scalar.AspNetCore" />
-      <PackageReference Include="SharpGrip.FluentValidation.AutoValidation.Endpoints" />
-  </ItemGroup>
+       <PackageReference Include="Scalar.AspNetCore" />
+       <PackageReference Include="SharpGrip.FluentValidation.AutoValidation.Endpoints" />
+       <PackageReference Include="Microsoft.Extensions.Http" />
+   </ItemGroup>
 </Project>

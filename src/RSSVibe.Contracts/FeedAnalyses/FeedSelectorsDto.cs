@@ -10,6 +10,5 @@ public sealed record FeedSelectorsDto(
     string? Description,
     string? PublishedDate,
     string? Author,
-    string? Image,
-    Dictionary<string, string>? CustomSelectors
+    string? Image
 );

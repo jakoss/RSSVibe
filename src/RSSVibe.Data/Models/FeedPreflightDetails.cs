@@ -8,5 +8,5 @@ public sealed class FeedPreflightDetails
     public bool HasInvalidMarkup { get; init; }
     public bool IsRateLimited { get; init; }
     public string? ErrorMessage { get; init; }
-    public Dictionary<string, string>? AdditionalInfo { get; init; }
+    public string AdditionalInfo { get; init; } = "{}";
 }

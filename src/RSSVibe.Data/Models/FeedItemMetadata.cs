@@ -9,5 +9,4 @@ public sealed class FeedItemMetadata
     public string? ContentHash { get; init; }
     public int? WordCount { get; init; }
     public string? Language { get; init; }
-    public Dictionary<string, string>? CustomFields { get; init; }
 }

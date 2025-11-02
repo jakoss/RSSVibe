@@ -10,6 +10,5 @@ public sealed record FeedItemMetadataDto(
     string? ImageUrl,
     string? ContentHash,
     int? WordCount,
-    string? Language,
-    Dictionary<string, string>? CustomFields
+    string? Language
 );

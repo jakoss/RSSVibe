@@ -1,11 +1,14 @@
+// ReSharper disable once CheckNamespace
+#pragma warning disable IDE0130
 namespace Microsoft.Extensions.Hosting;
+#pragma warning restore IDE0130
 
 /// <summary>
 /// Extension methods for <see cref="IHostEnvironment"/>.
 /// </summary>
 public static class HostEnvironmentExtensions
 {
-    private const string IntegrationTestsEnvironment = "IntegrationTests";
+    private const string _integrationTestsEnvironment = "IntegrationTests";
 
     /// <summary>
     /// Checks if the current host environment name is "IntegrationTests".
@@ -16,6 +19,6 @@ public static class HostEnvironmentExtensions
     {
         ArgumentNullException.ThrowIfNull(hostEnvironment);
 
-        return hostEnvironment.IsEnvironment(IntegrationTestsEnvironment);
+        return hostEnvironment.IsEnvironment(_integrationTestsEnvironment);
     }
 }

@@ -28,12 +28,12 @@ public sealed record ListFeedsRequest(
 
             RuleFor(x => x.Sort)
                 .Must(x => x is null ||
-                    x.Equals("createdAt:asc", System.StringComparison.OrdinalIgnoreCase) ||
-                    x.Equals("createdAt:desc", System.StringComparison.OrdinalIgnoreCase) ||
-                    x.Equals("lastParsedAt:asc", System.StringComparison.OrdinalIgnoreCase) ||
-                    x.Equals("lastParsedAt:desc", System.StringComparison.OrdinalIgnoreCase) ||
-                    x.Equals("title:asc", System.StringComparison.OrdinalIgnoreCase) ||
-                    x.Equals("title:desc", System.StringComparison.OrdinalIgnoreCase))
+                    x.Equals("createdAt:asc", StringComparison.OrdinalIgnoreCase) ||
+                    x.Equals("createdAt:desc", StringComparison.OrdinalIgnoreCase) ||
+                    x.Equals("lastParsedAt:asc", StringComparison.OrdinalIgnoreCase) ||
+                    x.Equals("lastParsedAt:desc", StringComparison.OrdinalIgnoreCase) ||
+                    x.Equals("title:asc", StringComparison.OrdinalIgnoreCase) ||
+                    x.Equals("title:desc", StringComparison.OrdinalIgnoreCase))
                 .WithMessage("Sort must be one of: createdAt, lastParsedAt, title with :asc or :desc");
 
             RuleFor(x => x.Status)

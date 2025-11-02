@@ -81,6 +81,16 @@ builder.Services.Configure<IdentityOptions>(options =>
 // Register all RSSVibe application services
 builder.Services.AddRssVibeServices();
 
+// Configure HttpClient for preflight checks
+builder.Services.AddHttpClient("PreflightClient")
+    .SetHandlerLifetime(TimeSpan.FromMinutes(5))
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+    {
+        AllowAutoRedirect = true,
+        MaxAutomaticRedirections = 5,
+        AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate
+    });
+
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequest>();
 builder.Services.AddFluentValidationAutoValidation();
 

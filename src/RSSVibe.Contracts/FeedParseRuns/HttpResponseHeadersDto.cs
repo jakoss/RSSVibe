@@ -10,6 +10,5 @@ public sealed record HttpResponseHeadersDto(
     string? CacheControl,
     string? Expires,
     int? ContentLength,
-    string? Server,
-    Dictionary<string, string>? CustomHeaders
+    string? Server
 );

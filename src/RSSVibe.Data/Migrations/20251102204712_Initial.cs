@@ -34,6 +34,9 @@ namespace RSSVibe.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    DisplayName = table.Column<string>(type: "text", nullable: false),
+                    MustChangePassword = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -169,7 +172,7 @@ namespace RSSVibe.Data.Migrations
                     TargetUrl = table.Column<string>(type: "text", nullable: false),
                     NormalizedUrl = table.Column<string>(type: "text", nullable: false),
                     AnalysisStatus = table.Column<string>(type: "text", nullable: false, defaultValue: "Pending"),
-                    PreflightChecks = table.Column<string>(type: "text", nullable: false),
+                    PreflightChecks = table.Column<int>(type: "integer", nullable: false),
                     Warnings = table.Column<string[]>(type: "text[]", nullable: false),
                     AiModel = table.Column<string>(type: "text", nullable: true),
                     ApprovedFeedId = table.Column<Guid>(type: "uuid", nullable: true),
@@ -178,13 +181,36 @@ namespace RSSVibe.Data.Migrations
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     PreflightDetails = table.Column<string>(type: "jsonb", nullable: false),
-                    Selectors = table.Column<string>(type: "jsonb", nullable: true)
+                    Selectors = table.Column<string>(type: "jsonb", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_FeedAnalyses", x => x.Id);
                     table.ForeignKey(
                         name: "FK_FeedAnalyses_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RefreshTokens",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Token = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
+                    RevokedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsUsed = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RefreshTokens", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RefreshTokens_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
@@ -452,6 +478,27 @@ namespace RSSVibe.Data.Migrations
                 table: "Feeds",
                 columns: new[] { "UserId", "NormalizedSourceUrl" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RefreshTokens_ExpiresAt",
+                table: "RefreshTokens",
+                column: "ExpiresAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RefreshTokens_Token",
+                table: "RefreshTokens",
+                column: "Token",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RefreshTokens_UserId",
+                table: "RefreshTokens",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RefreshTokens_UserId_RevokedAt",
+                table: "RefreshTokens",
+                columns: new[] { "UserId", "RevokedAt" });
         }
 
         /// <inheritdoc />
@@ -474,6 +521,9 @@ namespace RSSVibe.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "FeedParseRunItems");
+
+            migrationBuilder.DropTable(
+                name: "RefreshTokens");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

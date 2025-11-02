@@ -1,6 +1,8 @@
-namespace RSSVibe.Services.Extensions;
-
+using Microsoft.Extensions.DependencyInjection;
 using RSSVibe.Services.Auth;
+using RSSVibe.Services.FeedAnalyses;
+
+namespace RSSVibe.Services.Extensions;
 
 /// <summary>
 /// Extension methods for registering RSSVibe services into the dependency injection container.
@@ -17,6 +19,10 @@ public static class ServiceCollectionExtensions
         // Register auth services
         services.AddScoped<IAuthService, AuthService>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+
+        // Register feed analysis services
+        services.AddScoped<IFeedAnalysisService, FeedAnalysisService>();
+        services.AddScoped<IPreflightService, PreflightService>();
 
         // Future services will be added here
         // services.AddScoped<IFeedService, FeedService>();

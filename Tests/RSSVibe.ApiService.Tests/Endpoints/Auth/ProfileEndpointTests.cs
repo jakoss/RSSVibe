@@ -1,10 +1,11 @@
-using System.Net;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using RSSVibe.Contracts.Auth;
 using RSSVibe.Data.Entities;
+using RSSVibe.Services.Auth;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 
 namespace RSSVibe.ApiService.Tests.Endpoints.Auth;
 
@@ -33,7 +34,7 @@ public class ProfileEndpointTests : TestsBase
         await Assert.That(profileData.MustChangePassword).IsFalse();
         await Assert.That(profileData.UserId).IsNotEqualTo(Guid.Empty);
         await Assert.That(profileData.Roles).IsNotNull();
-        await Assert.That(profileData.CreatedAt).IsNotEqualTo(default(DateTimeOffset));
+        await Assert.That(profileData.CreatedAt).IsNotEqualTo(default);
     }
 
     [Test]
@@ -83,7 +84,7 @@ public class ProfileEndpointTests : TestsBase
         // Arrange - Create a new user and generate token, then delete the user
         await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var jwtTokenGenerator = scope.ServiceProvider.GetRequiredService<RSSVibe.Services.Auth.IJwtTokenGenerator>();
+        var jwtTokenGenerator = scope.ServiceProvider.GetRequiredService<IJwtTokenGenerator>();
 
         var tempUser = new ApplicationUser
         {
@@ -122,7 +123,7 @@ public class ProfileEndpointTests : TestsBase
         await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-        var jwtTokenGenerator = scope.ServiceProvider.GetRequiredService<RSSVibe.Services.Auth.IJwtTokenGenerator>();
+        var jwtTokenGenerator = scope.ServiceProvider.GetRequiredService<IJwtTokenGenerator>();
 
         // Ensure test roles exist
         var adminRole = "Admin";
@@ -181,7 +182,7 @@ public class ProfileEndpointTests : TestsBase
         // Arrange - Create a new user with MustChangePassword = true
         await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var jwtTokenGenerator = scope.ServiceProvider.GetRequiredService<RSSVibe.Services.Auth.IJwtTokenGenerator>();
+        var jwtTokenGenerator = scope.ServiceProvider.GetRequiredService<IJwtTokenGenerator>();
 
         var passwordChangeUser = new ApplicationUser
         {
@@ -228,11 +229,11 @@ public class ProfileEndpointTests : TestsBase
 
         var profileData = await response.Content.ReadFromJsonAsync<ProfileResponse>();
         await Assert.That(profileData).IsNotNull();
-        await Assert.That(profileData!.CreatedAt).IsNotEqualTo(default(DateTimeOffset));
-        
+        await Assert.That(profileData!.CreatedAt).IsNotEqualTo(default);
+
         // CreatedAt should be before the request (user was created during test setup)
         await Assert.That(profileData.CreatedAt).IsLessThanOrEqualTo(beforeRequest);
-        
+
         // CreatedAt should be reasonable (within last 24 hours for test session)
         var yesterday = DateTimeOffset.UtcNow.AddDays(-1);
         await Assert.That(profileData.CreatedAt).IsGreaterThan(yesterday);
