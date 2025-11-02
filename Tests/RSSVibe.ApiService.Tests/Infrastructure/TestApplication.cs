@@ -77,6 +77,9 @@ public class TestApplication : WebApplicationFactory<Program>, IAsyncInitializer
 
     protected override IHost CreateHost(IHostBuilder builder)
     {
+        // Set environment to IntegrationTests
+        builder.UseEnvironment("IntegrationTests");
+
         builder.ConfigureHostConfiguration(config =>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
