@@ -126,8 +126,8 @@ public class ProfileEndpointTests : TestsBase
         var jwtTokenGenerator = scope.ServiceProvider.GetRequiredService<IJwtTokenGenerator>();
 
         // Ensure test roles exist
-        var adminRole = "Admin";
-        var moderatorRole = "Moderator";
+        const string adminRole = "Admin";
+        const string moderatorRole = "Moderator";
 
         if (!await roleManager.RoleExistsAsync(adminRole))
         {
@@ -170,8 +170,8 @@ public class ProfileEndpointTests : TestsBase
 
         var profileData = await response.Content.ReadFromJsonAsync<ProfileResponse>();
         await Assert.That(profileData).IsNotNull();
-        await Assert.That(profileData!.Roles).IsNotNull();
-        await Assert.That(profileData.Roles!.Count).IsEqualTo(2);
+        await Assert.That(profileData.Roles).IsNotNull();
+        await Assert.That(profileData.Roles.Count).IsEqualTo(2);
         await Assert.That(profileData.Roles).Contains(adminRole);
         await Assert.That(profileData.Roles).Contains(moderatorRole);
     }
@@ -211,7 +211,7 @@ public class ProfileEndpointTests : TestsBase
 
         var profileData = await response.Content.ReadFromJsonAsync<ProfileResponse>();
         await Assert.That(profileData).IsNotNull();
-        await Assert.That(profileData!.MustChangePassword).IsTrue();
+        await Assert.That(profileData.MustChangePassword).IsTrue();
     }
 
     [Test]
@@ -229,7 +229,7 @@ public class ProfileEndpointTests : TestsBase
 
         var profileData = await response.Content.ReadFromJsonAsync<ProfileResponse>();
         await Assert.That(profileData).IsNotNull();
-        await Assert.That(profileData!.CreatedAt).IsNotEqualTo(default);
+        await Assert.That(profileData.CreatedAt).IsNotEqualTo(default);
 
         // CreatedAt should be before the request (user was created during test setup)
         await Assert.That(profileData.CreatedAt).IsLessThanOrEqualTo(beforeRequest);

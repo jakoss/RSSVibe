@@ -1,7 +1,6 @@
+using RSSVibe.ApiService.Endpoints.Auth;
+using RSSVibe.ApiService.Endpoints.FeedAnalyses;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
-
-using Auth;
-using FeedAnalyses;
 
 namespace RSSVibe.ApiService.Endpoints;
 /// <summary>
