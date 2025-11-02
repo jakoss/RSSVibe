@@ -46,7 +46,8 @@ internal sealed class AuthService(
             UserName = command.Email,
             Email = command.Email,
             DisplayName = command.DisplayName,
-            MustChangePassword = command.MustChangePassword
+            MustChangePassword = command.MustChangePassword,
+            CreatedAt = DateTimeOffset.UtcNow
         };
 
         try
@@ -535,6 +536,77 @@ internal sealed class AuthService(
             {
                 Success = false,
                 Error = ChangePasswordError.IdentityStoreUnavailable
+            };
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<GetUserProfileResult> GetUserProfileAsync(
+        GetUserProfileCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Find user by ID from JWT claims
+            var user = await userManager.FindByIdAsync(command.UserId.ToString());
+
+            if (user is null)
+            {
+                // User in JWT but not in database - data inconsistency
+                logger.LogWarning(
+                    "User profile requested but user not found in database: {UserId}",
+                    command.UserId);
+
+                return new GetUserProfileResult
+                {
+                    Success = false,
+                    Error = ProfileError.UserNotFound
+                };
+            }
+
+            // Retrieve user roles from Identity
+            var roles = await userManager.GetRolesAsync(user);
+
+            logger.LogInformation(
+                "User profile retrieved successfully for user: {UserId}",
+                command.UserId);
+
+            // Map entity to result
+            return new GetUserProfileResult
+            {
+                Success = true,
+                UserId = user.Id,
+                Email = user.Email,
+                DisplayName = user.DisplayName,
+                Roles = [.. roles],
+                MustChangePassword = user.MustChangePassword,
+                CreatedAt = user.CreatedAt
+            };
+        }
+        catch (DbException ex)
+        {
+            logger.LogError(
+                ex,
+                "Database error while retrieving user profile for user: {UserId}",
+                command.UserId);
+
+            return new GetUserProfileResult
+            {
+                Success = false,
+                Error = ProfileError.IdentityStoreUnavailable
+            };
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Unexpected error while retrieving user profile for user: {UserId}",
+                command.UserId);
+
+            return new GetUserProfileResult
+            {
+                Success = false,
+                Error = ProfileError.IdentityStoreUnavailable
             };
         }
     }

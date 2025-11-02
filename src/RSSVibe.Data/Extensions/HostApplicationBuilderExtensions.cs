@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RSSVibe.Data.Entities;
@@ -17,6 +18,7 @@ public static class HostApplicationBuilderExtensions
             });
 
         builder.Services.AddIdentityCore<ApplicationUser>()
+            .AddRoles<IdentityRole<Guid>>()
             .AddEntityFrameworkStores<RssVibeDbContext>();
 
         return builder;

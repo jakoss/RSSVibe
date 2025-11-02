@@ -19,6 +19,7 @@ public static class AuthGroup
         group.MapLoginEndpoint();
         group.MapRefreshEndpoint();
         group.MapChangePasswordEndpoint();
+        group.MapProfileEndpoint();
 
         return endpoints;
     }

@@ -38,4 +38,14 @@ public interface IAuthService
     /// <param name="cancellationToken">Cancellation token for the operation.</param>
     /// <returns>Result indicating success or specific error details.</returns>
     Task<ChangePasswordResult> ChangePasswordAsync(ChangePasswordCommand command, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves user profile information including roles and security metadata.
+    /// </summary>
+    /// <param name="command">Command containing user ID to retrieve profile for.</param>
+    /// <param name="cancellationToken">Cancellation token for the operation.</param>
+    /// <returns>Result containing user profile data on success or error information on failure.</returns>
+    Task<GetUserProfileResult> GetUserProfileAsync(
+        GetUserProfileCommand command,
+        CancellationToken cancellationToken = default);
 }

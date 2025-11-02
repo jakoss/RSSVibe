@@ -61,7 +61,8 @@ public class TestApplication : WebApplicationFactory<Program>, IAsyncInitializer
             UserName = TestUserEmail,
             Email = TestUserEmail,
             DisplayName = TestUserDisplayName,
-            MustChangePassword = false
+            MustChangePassword = false,
+            CreatedAt = DateTimeOffset.UtcNow
         };
 
         var createResult = await userManager.CreateAsync(testUser, TestUserPassword);

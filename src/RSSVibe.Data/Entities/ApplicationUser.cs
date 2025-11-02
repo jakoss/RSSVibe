@@ -13,4 +13,9 @@ public sealed class ApplicationUser : IdentityUser<Guid>
     /// Flag indicating if user must change password on first login.
     /// </summary>
     public bool MustChangePassword { get; set; }
+
+    /// <summary>
+    /// Timestamp when user account was created.
+    /// </summary>
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
