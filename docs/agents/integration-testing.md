@@ -133,7 +133,7 @@ public class RegisterEndpointTests : TestsBase
 
         var responseData = await response.Content.ReadFromJsonAsync<RegisterResponse>();
         await Assert.That(responseData).IsNotNull();
-        await Assert.That(responseData!.Email).IsEqualTo(request.Email);
+        await Assert.That(responseData.Email).IsEqualTo(request.Email);
         await Assert.That(responseData.DisplayName).IsEqualTo(request.DisplayName);
         await Assert.That(responseData.UserId).IsNotEqualTo(Guid.Empty);
     }
@@ -261,10 +261,10 @@ public async Task LoginEndpoint_SuccessfulLogin_ShouldCreateRefreshTokenInDataba
     var dbContext = scope.ServiceProvider.GetRequiredService<RssVibeDbContext>();
 
     var refreshToken = await dbContext.RefreshTokens
-        .FirstOrDefaultAsync(rt => rt.Token == loginResponse!.RefreshToken);
+        .FirstOrDefaultAsync(rt => rt.Token == loginResponse.RefreshToken);
 
     await Assert.That(refreshToken).IsNotNull();
-    await Assert.That(refreshToken!.ExpiresAt).IsGreaterThan(DateTime.UtcNow);
+    await Assert.That(refreshToken.ExpiresAt).IsGreaterThan(DateTime.UtcNow);
     await Assert.That(refreshToken.IsUsed).IsFalse();
 }
 ```
@@ -279,7 +279,7 @@ var dbContext = scope.ServiceProvider.GetRequiredService<RssVibeDbContext>();
 
 var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == "test@example.com");
 await Assert.That(user).IsNotNull();
-await Assert.That(user!.EmailConfirmed).IsTrue();
+await Assert.That(user.EmailConfirmed).IsTrue();
 ```
 
 **2. Service State Verification**:
@@ -300,7 +300,7 @@ var dbContext = scope.ServiceProvider.GetRequiredService<RssVibeDbContext>();
 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
 var user = await userManager.FindByEmailAsync("test@example.com");
-var loginCount = await dbContext.AuditLogs.CountAsync(a => a.UserId == user!.Id);
+var loginCount = await dbContext.AuditLogs.CountAsync(a => a.UserId == user.Id);
 await Assert.That(loginCount).IsGreaterThan(0);
 ```
 

@@ -49,11 +49,11 @@ public class RegisterEndpointTests : TestsBase
 
         var user = await userManager.FindByEmailAsync(request.Email);
         await Assert.That(user).IsNotNull();
-        await Assert.That(user!.Email).IsEqualTo(request.Email);
+        await Assert.That(user.Email).IsEqualTo(request.Email);
         await Assert.That(user.NormalizedEmail).IsEqualTo(request.Email.ToUpperInvariant());
         await Assert.That(user.DisplayName).IsEqualTo(request.DisplayName);
         await Assert.That(user.MustChangePassword).IsEqualTo(request.MustChangePassword);
-        await Assert.That(user.Id).IsEqualTo(responseData!.UserId);
+        await Assert.That(user.Id).IsEqualTo(responseData.UserId);
     }
 
     [Test]
@@ -226,7 +226,7 @@ public class RegisterEndpointTests : TestsBase
 
         var responseData = await response.Content.ReadFromJsonAsync<RegisterResponse>();
         await Assert.That(responseData).IsNotNull();
-        await Assert.That(responseData!.MustChangePassword).IsTrue();
+        await Assert.That(responseData.MustChangePassword).IsTrue();
 
         // Assert - Database state (flag should be persisted)
         await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
@@ -234,6 +234,6 @@ public class RegisterEndpointTests : TestsBase
 
         var user = await userManager.FindByEmailAsync(request.Email);
         await Assert.That(user).IsNotNull();
-        await Assert.That(user!.MustChangePassword).IsTrue();
+        await Assert.That(user.MustChangePassword).IsTrue();
     }
 }

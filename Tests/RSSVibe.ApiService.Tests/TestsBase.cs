@@ -12,11 +12,11 @@ public abstract class TestsBase
     /// Creates an HTTP client authenticated with the test user's bearer token.
     /// </summary>
     /// <returns>An authenticated HttpClient instance.</returns>
-    protected HttpClient CreateAuthenticatedClient()
+    protected HttpClient CreateAuthenticatedClient(string? customToken = null)
     {
         var client = WebApplicationFactory.CreateClient();
         client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", WebApplicationFactory.TestUserBearerToken);
+            new AuthenticationHeaderValue("Bearer", customToken ?? WebApplicationFactory.TestUserBearerToken);
         return client;
     }
 }

@@ -46,7 +46,7 @@ public class LoginEndpointTests : TestsBase
 
         var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
         await Assert.That(loginResponse).IsNotNull();
-        await Assert.That(loginResponse!.AccessToken).IsNotEmpty();
+        await Assert.That(loginResponse.AccessToken).IsNotEmpty();
         await Assert.That(loginResponse.RefreshToken).IsNotEmpty();
         await Assert.That(loginResponse.ExpiresInSeconds).IsGreaterThan(0);
         await Assert.That(loginResponse.MustChangePassword).IsEqualTo(false);
@@ -59,7 +59,7 @@ public class LoginEndpointTests : TestsBase
             .FirstOrDefaultAsync(rt => rt.Token == loginResponse.RefreshToken);
 
         await Assert.That(refreshToken).IsNotNull();
-        await Assert.That(refreshToken!.ExpiresAt).IsGreaterThan(DateTime.UtcNow);
+        await Assert.That(refreshToken.ExpiresAt).IsGreaterThan(DateTime.UtcNow);
         await Assert.That(refreshToken.IsUsed).IsFalse();
         await Assert.That(refreshToken.RevokedAt).IsNull();
     }
@@ -119,7 +119,7 @@ public class LoginEndpointTests : TestsBase
 
         var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         await Assert.That(problemDetails).IsNotNull();
-        await Assert.That(problemDetails!.Detail).Contains("Invalid email or password");
+        await Assert.That(problemDetails.Detail).Contains("Invalid email or password");
     }
 
     [Test]
@@ -152,7 +152,7 @@ public class LoginEndpointTests : TestsBase
 
         var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         await Assert.That(problemDetails).IsNotNull();
-        await Assert.That(problemDetails!.Detail).Contains("Invalid email or password");
+        await Assert.That(problemDetails.Detail).Contains("Invalid email or password");
 
         // Assert - Database state (AccessFailedCount should increment)
         await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
@@ -160,7 +160,7 @@ public class LoginEndpointTests : TestsBase
 
         var user = await userManager.FindByEmailAsync("wrongpass_test@rssvibe.local");
         await Assert.That(user).IsNotNull();
-        await Assert.That(user!.AccessFailedCount).IsGreaterThan(0);
+        await Assert.That(user.AccessFailedCount).IsGreaterThan(0);
     }
 
     [Test]
@@ -205,7 +205,7 @@ public class LoginEndpointTests : TestsBase
 
         var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         await Assert.That(problemDetails).IsNotNull();
-        await Assert.That(problemDetails!.Detail).Contains("locked");
+        await Assert.That(problemDetails.Detail).Contains("locked");
 
         // Assert - Database state (user should be locked)
         await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
@@ -213,7 +213,7 @@ public class LoginEndpointTests : TestsBase
 
         var user = await userManager.FindByEmailAsync("locked_test@rssvibe.local");
         await Assert.That(user).IsNotNull();
-        await Assert.That(user!.LockoutEnd).IsNotNull();
+        await Assert.That(user.LockoutEnd).IsNotNull();
         await Assert.That(user.LockoutEnd!.Value).IsGreaterThan(DateTimeOffset.UtcNow);
     }
 
@@ -247,7 +247,7 @@ public class LoginEndpointTests : TestsBase
 
         var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
         await Assert.That(loginResponse).IsNotNull();
-        await Assert.That(loginResponse!.MustChangePassword).IsEqualTo(true);
+        await Assert.That(loginResponse.MustChangePassword).IsEqualTo(true);
     }
 
     [Test]
@@ -280,7 +280,7 @@ public class LoginEndpointTests : TestsBase
 
         var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
         await Assert.That(loginResponse).IsNotNull();
-        await Assert.That(loginResponse!.RefreshToken).IsNotEmpty();
+        await Assert.That(loginResponse.RefreshToken).IsNotEmpty();
 
         // Assert - Database state (refresh token should expire in ~7 days, configured in test)
         await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
@@ -290,7 +290,7 @@ public class LoginEndpointTests : TestsBase
             .FirstOrDefaultAsync(rt => rt.Token == loginResponse.RefreshToken);
 
         await Assert.That(refreshToken).IsNotNull();
-        await Assert.That(refreshToken!.ExpiresAt).IsGreaterThan(DateTime.UtcNow.AddDays(6));
+        await Assert.That(refreshToken.ExpiresAt).IsGreaterThan(DateTime.UtcNow.AddDays(6));
         await Assert.That(refreshToken.ExpiresAt).IsLessThan(DateTime.UtcNow.AddDays(8));
     }
 
@@ -337,7 +337,7 @@ public class LoginEndpointTests : TestsBase
 
         var user = await userManager.FindByEmailAsync("resetfailure_test@rssvibe.local");
         await Assert.That(user).IsNotNull();
-        await Assert.That(user!.AccessFailedCount).IsEqualTo(0);
+        await Assert.That(user.AccessFailedCount).IsEqualTo(0);
 
         // Make 3 more failed attempts - should NOT be locked yet (failure count was reset)
         for (int i = 0; i < 3; i++)
@@ -378,7 +378,7 @@ public class LoginEndpointTests : TestsBase
 
         var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
         await Assert.That(loginResponse).IsNotNull();
-        await Assert.That(loginResponse!.RefreshToken).IsNotEmpty();
+        await Assert.That(loginResponse.RefreshToken).IsNotEmpty();
 
         // Assert - Database state (refresh token should expire in ~7 days, default expiration)
         await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
@@ -388,7 +388,7 @@ public class LoginEndpointTests : TestsBase
             .FirstOrDefaultAsync(rt => rt.Token == loginResponse.RefreshToken);
 
         await Assert.That(refreshToken).IsNotNull();
-        await Assert.That(refreshToken!.ExpiresAt).IsGreaterThan(DateTime.UtcNow.AddDays(6));
+        await Assert.That(refreshToken.ExpiresAt).IsGreaterThan(DateTime.UtcNow.AddDays(6));
         await Assert.That(refreshToken.ExpiresAt).IsLessThan(DateTime.UtcNow.AddDays(8));
     }
 }

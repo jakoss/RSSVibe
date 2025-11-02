@@ -49,7 +49,9 @@ public class RefreshEndpointTests : TestsBase
 
         var login = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
 
-        var refreshRequest = new RefreshTokenRequest(login!.RefreshToken);
+        await Assert.That(login).IsNotNull();
+
+        var refreshRequest = new RefreshTokenRequest(login.RefreshToken);
 
         // Act
         var response = await client.PostAsJsonAsync("/api/v1/auth/refresh", refreshRequest);
@@ -67,7 +69,7 @@ public class RefreshEndpointTests : TestsBase
 
         var refreshResponse = await response.Content.ReadFromJsonAsync<RefreshTokenResponse>();
         await Assert.That(refreshResponse).IsNotNull();
-        await Assert.That(refreshResponse!.AccessToken).IsNotEmpty();
+        await Assert.That(refreshResponse.AccessToken).IsNotEmpty();
         await Assert.That(refreshResponse.RefreshToken).IsNotEmpty();
         await Assert.That(refreshResponse.ExpiresInSeconds).IsGreaterThan(0);
         await Assert.That(refreshResponse.MustChangePassword).IsEqualTo(false);
@@ -84,14 +86,14 @@ public class RefreshEndpointTests : TestsBase
         var oldToken = await dbContext.RefreshTokens
             .FirstOrDefaultAsync(rt => rt.Token == login.RefreshToken);
         await Assert.That(oldToken).IsNotNull();
-        await Assert.That(oldToken!.IsUsed).IsTrue();
+        await Assert.That(oldToken.IsUsed).IsTrue();
         await Assert.That(oldToken.RevokedAt).IsNull();
 
         // New token should exist and not be used
         var newToken = await dbContext.RefreshTokens
             .FirstOrDefaultAsync(rt => rt.Token == refreshResponse.RefreshToken);
         await Assert.That(newToken).IsNotNull();
-        await Assert.That(newToken!.IsUsed).IsFalse();
+        await Assert.That(newToken.IsUsed).IsFalse();
         await Assert.That(newToken.RevokedAt).IsNull();
         await Assert.That(newToken.ExpiresAt).IsGreaterThan(DateTime.UtcNow);
     }
@@ -112,7 +114,7 @@ public class RefreshEndpointTests : TestsBase
         var expiredToken = new RefreshToken
         {
             Id = Guid.CreateVersion7(),
-            UserId = user!.Id,
+            UserId = user.Id,
             Token = "expired-token-" + Guid.NewGuid().ToString(),
             ExpiresAt = DateTime.UtcNow.AddDays(-1), // Expired yesterday
             CreatedAt = DateTime.UtcNow.AddDays(-8),
@@ -132,7 +134,7 @@ public class RefreshEndpointTests : TestsBase
 
         var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         await Assert.That(problemDetails).IsNotNull();
-        await Assert.That(problemDetails!.Detail).Contains("invalid, expired, or has been revoked");
+        await Assert.That(problemDetails.Detail).Contains("invalid, expired, or has been revoked");
     }
 
     [Test]
@@ -151,7 +153,7 @@ public class RefreshEndpointTests : TestsBase
         var revokedToken = new RefreshToken
         {
             Id = Guid.CreateVersion7(),
-            UserId = user!.Id,
+            UserId = user.Id,
             Token = "revoked-token-" + Guid.NewGuid().ToString(),
             ExpiresAt = DateTime.UtcNow.AddDays(7),
             CreatedAt = DateTime.UtcNow,
@@ -172,7 +174,7 @@ public class RefreshEndpointTests : TestsBase
 
         var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         await Assert.That(problemDetails).IsNotNull();
-        await Assert.That(problemDetails!.Detail).Contains("invalid, expired, or has been revoked");
+        await Assert.That(problemDetails.Detail).Contains("invalid, expired, or has been revoked");
     }
 
     [Test]
@@ -190,7 +192,7 @@ public class RefreshEndpointTests : TestsBase
 
         var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         await Assert.That(problemDetails).IsNotNull();
-        await Assert.That(problemDetails!.Detail).Contains("invalid, expired, or has been revoked");
+        await Assert.That(problemDetails.Detail).Contains("invalid, expired, or has been revoked");
     }
 
     [Test]
@@ -216,7 +218,8 @@ public class RefreshEndpointTests : TestsBase
         var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", loginRequest);
         var login = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
 
-        var refreshRequest = new RefreshTokenRequest(login!.RefreshToken);
+        await Assert.That(login).IsNotNull();
+        var refreshRequest = new RefreshTokenRequest(login.RefreshToken);
 
         // Use the token once (successfully)
         var firstResponse = await client.PostAsJsonAsync("/api/v1/auth/refresh", refreshRequest);
@@ -230,7 +233,7 @@ public class RefreshEndpointTests : TestsBase
 
         var problemDetails = await replayResponse.Content.ReadFromJsonAsync<ProblemDetails>();
         await Assert.That(problemDetails).IsNotNull();
-        await Assert.That(problemDetails!.Detail).Contains("already been used");
+        await Assert.That(problemDetails.Detail).Contains("already been used");
         await Assert.That(problemDetails.Detail).Contains("revoked");
 
         // Assert - Database state (all user tokens should be revoked)
@@ -241,7 +244,7 @@ public class RefreshEndpointTests : TestsBase
         await Assert.That(user).IsNotNull();
 
         var userTokens = await dbContext.RefreshTokens
-            .Where(rt => rt.UserId == user!.Id)
+            .Where(rt => rt.UserId == user.Id)
             .ToListAsync();
 
         await Assert.That(userTokens.Count).IsGreaterThan(0);
@@ -291,7 +294,8 @@ public class RefreshEndpointTests : TestsBase
         var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", loginRequest);
         var login = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
 
-        await Assert.That(login!.MustChangePassword).IsEqualTo(true);
+        await Assert.That(login).IsNotNull();
+        await Assert.That(login.MustChangePassword).IsEqualTo(true);
 
         var refreshRequest = new RefreshTokenRequest(login.RefreshToken);
 
@@ -303,7 +307,7 @@ public class RefreshEndpointTests : TestsBase
 
         var refreshResponse = await response.Content.ReadFromJsonAsync<RefreshTokenResponse>();
         await Assert.That(refreshResponse).IsNotNull();
-        await Assert.That(refreshResponse!.MustChangePassword).IsEqualTo(true);
+        await Assert.That(refreshResponse.MustChangePassword).IsEqualTo(true);
     }
 
     [Test]
@@ -328,17 +332,18 @@ public class RefreshEndpointTests : TestsBase
         );
         var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", loginRequest);
         var login = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+        await Assert.That(login).IsNotNull();
 
         // Check original token expiration
         await using var scope1 = WebApplicationFactory.Services.CreateAsyncScope();
         var dbContext1 = scope1.ServiceProvider.GetRequiredService<RssVibeDbContext>();
         var originalToken = await dbContext1.RefreshTokens
-            .FirstOrDefaultAsync(rt => rt.Token == login!.RefreshToken);
+            .FirstOrDefaultAsync(rt => rt.Token == login.RefreshToken);
         await Assert.That(originalToken).IsNotNull();
 
-        var originalLifetime = (originalToken!.ExpiresAt - originalToken.CreatedAt).TotalDays;
+        var originalLifetime = (originalToken.ExpiresAt - originalToken.CreatedAt).TotalDays;
 
-        var refreshRequest = new RefreshTokenRequest(login!.RefreshToken);
+        var refreshRequest = new RefreshTokenRequest(login.RefreshToken);
 
         // Act - Refresh the token
         var response = await client.PostAsJsonAsync("/api/v1/auth/refresh", refreshRequest);
@@ -353,10 +358,10 @@ public class RefreshEndpointTests : TestsBase
         await using var scope2 = WebApplicationFactory.Services.CreateAsyncScope();
         var dbContext2 = scope2.ServiceProvider.GetRequiredService<RssVibeDbContext>();
         var newToken = await dbContext2.RefreshTokens
-            .FirstOrDefaultAsync(rt => rt.Token == refreshResponse!.RefreshToken);
+            .FirstOrDefaultAsync(rt => rt.Token == refreshResponse.RefreshToken);
         await Assert.That(newToken).IsNotNull();
 
-        var newLifetime = (newToken!.ExpiresAt - newToken.CreatedAt).TotalDays;
+        var newLifetime = (newToken.ExpiresAt - newToken.CreatedAt).TotalDays;
 
         // New token should have same lifetime as original (sliding window)
         // Allow 1 second tolerance for test execution time

@@ -30,4 +30,12 @@ public interface IAuthService
     Task<RefreshTokenResult> RefreshTokenAsync(
         RefreshTokenCommand command,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Changes a user's password after verifying the current password.
+    /// </summary>
+    /// <param name="command">Password change command containing user ID, current password, and new password.</param>
+    /// <param name="cancellationToken">Cancellation token for the operation.</param>
+    /// <returns>Result indicating success or specific error details.</returns>
+    Task<ChangePasswordResult> ChangePasswordAsync(ChangePasswordCommand command, CancellationToken cancellationToken = default);
 }

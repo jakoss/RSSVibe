@@ -394,6 +394,151 @@ internal sealed class AuthService(
         }
     }
 
+    /// <inheritdoc />
+    public async Task<ChangePasswordResult> ChangePasswordAsync(
+        ChangePasswordCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // a. Find user by ID using UserManager.FindByIdAsync(userId)
+            var user = await userManager.FindByIdAsync(command.UserId.ToString());
+            if (user is null)
+            {
+                // Don't reveal that user doesn't exist (prevents enumeration)
+                logger.LogWarning(
+                    "Failed password change attempt for non-existent user: {UserId}",
+                    command.UserId);
+
+                return new ChangePasswordResult
+                {
+                    Success = false,
+                    Error = ChangePasswordError.InvalidCurrentPassword
+                };
+            }
+
+            // b. Verify current password using UserManager.CheckPasswordAsync(user, currentPassword)
+            var passwordValid = await userManager.CheckPasswordAsync(user, command.CurrentPassword);
+            if (!passwordValid)
+            {
+                logger.LogWarning(
+                    "Failed password change attempt for user {UserId}: Invalid current password",
+                    command.UserId);
+
+                return new ChangePasswordResult
+                {
+                    Success = false,
+                    Error = ChangePasswordError.InvalidCurrentPassword
+                };
+            }
+
+            // c. Use execution strategy for PostgreSQL transaction handling
+            var strategy = dbContext.Database.CreateExecutionStrategy();
+            var state = (command, user, userManager, dbContext, logger);
+
+            return await strategy.ExecuteAsync(
+                state,
+                static async (state, ct) =>
+                {
+                    var (command, user, userManager, dbContext, logger) = state;
+
+                    await using var transaction = await dbContext.Database.BeginTransactionAsync(ct);
+
+                    try
+                    {
+                        // c. Change password using UserManager.ChangePasswordAsync(user, currentPassword, newPassword)
+                        var identityResult = await userManager.ChangePasswordAsync(
+                            user,
+                            command.CurrentPassword,
+                            command.NewPassword);
+
+                        if (!identityResult.Succeeded)
+                        {
+                            var errors = string.Join(", ", identityResult.Errors.Select(e => e.Description));
+                            logger.LogWarning(
+                                "Password change failed for user {UserId}: {Errors}",
+                                command.UserId,
+                                errors);
+
+                            return new ChangePasswordResult
+                            {
+                                Success = false,
+                                Error = ChangePasswordError.WeakPassword
+                            };
+                        }
+
+                        // d. Clear MustChangePassword flag
+                        user.MustChangePassword = false;
+                        var updateResult = await userManager.UpdateAsync(user);
+
+                        if (!updateResult.Succeeded)
+                        {
+                            var errors = string.Join(", ", updateResult.Errors.Select(e => e.Description));
+                            logger.LogError(
+                                "Failed to clear MustChangePassword flag for user {UserId}: {Errors}",
+                                command.UserId,
+                                errors);
+
+                            return new ChangePasswordResult
+                            {
+                                Success = false,
+                                Error = ChangePasswordError.IdentityStoreUnavailable
+                            };
+                        }
+
+                        // e. Revoke all active refresh tokens
+                        await dbContext.RefreshTokens
+                            .Where(rt => rt.UserId == command.UserId && rt.RevokedAt == null)
+                            .ExecuteUpdateAsync(
+                                setters => setters.SetProperty(rt => rt.RevokedAt, DateTime.UtcNow),
+                                ct);
+
+                        // f. Commit transaction
+                        await dbContext.SaveChangesAsync(ct);
+                        await transaction.CommitAsync(ct);
+
+                        logger.LogInformation(
+                            "Password changed successfully for user: {UserId}",
+                            command.UserId);
+
+                        return new ChangePasswordResult { Success = true };
+                    }
+                    catch
+                    {
+                        await transaction.RollbackAsync(ct);
+                        throw;
+                    }
+                },
+                cancellationToken);
+        }
+        catch (DbException ex)
+        {
+            logger.LogError(
+                ex,
+                "Database error during password change for user {UserId}",
+                command.UserId);
+
+            return new ChangePasswordResult
+            {
+                Success = false,
+                Error = ChangePasswordError.IdentityStoreUnavailable
+            };
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Unexpected error during password change for user {UserId}",
+                command.UserId);
+
+            return new ChangePasswordResult
+            {
+                Success = false,
+                Error = ChangePasswordError.IdentityStoreUnavailable
+            };
+        }
+    }
+
     /// <summary>
     /// Anonymizes an email address for logging purposes (e.g., "u***@example.com").
     /// </summary>

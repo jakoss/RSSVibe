@@ -35,6 +35,12 @@ await Assert.That(value).IsNotEqualTo(0);
 await Assert.That(data).IsNotNull();
 await Assert.That(data).IsNull();
 
+// After asserting IsNotNull(), the compiler knows the object is not null
+// No need for null-forgiving operator (!) in subsequent code
+var responseData = await response.Content.ReadFromJsonAsync<RegisterResponse>();
+await Assert.That(responseData).IsNotNull();
+await Assert.That(responseData.Email).IsEqualTo(request.Email); // No ! needed
+
 // Boolean checks
 await Assert.That(result).IsTrue();
 await Assert.That(result).IsFalse();

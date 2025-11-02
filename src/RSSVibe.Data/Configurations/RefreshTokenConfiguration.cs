@@ -54,6 +54,10 @@ internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refre
         builder.HasIndex(rt => rt.ExpiresAt)
             .HasDatabaseName("IX_RefreshTokens_ExpiresAt");
 
+        // Composite index on (UserId, RevokedAt) for efficient token revocation queries
+        builder.HasIndex(rt => new { rt.UserId, rt.RevokedAt })
+            .HasDatabaseName("IX_RefreshTokens_UserId_RevokedAt");
+
         // Foreign key relationship to ApplicationUser
         builder.HasOne(rt => rt.User)
             .WithMany()
