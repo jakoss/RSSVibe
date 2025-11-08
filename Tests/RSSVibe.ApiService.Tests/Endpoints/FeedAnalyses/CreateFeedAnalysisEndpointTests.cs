@@ -4,8 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using RSSVibe.Contracts.FeedAnalyses;
 using RSSVibe.Data;
-using RSSVibe.Data.Entities;
-using RSSVibe.Data.Models;
 using RSSVibe.Services.FeedAnalyses;
 using System.Net;
 using System.Net.Http.Json;
@@ -22,8 +20,8 @@ internal sealed class TestPreflightService : IPreflightService
     {
         // Return a successful preflight result for testing
         var result = new PreflightCheckResult(
-            FeedPreflightChecks.None,
-            new FeedPreflightDetails
+            Data.Entities.FeedPreflightChecks.None,
+            new Data.Models.FeedPreflightDetails
             {
                 RequiresJavascript = false,
                 RequiresAuthentication = false,

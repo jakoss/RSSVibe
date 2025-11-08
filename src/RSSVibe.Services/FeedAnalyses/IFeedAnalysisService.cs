@@ -19,4 +19,14 @@ public interface IFeedAnalysisService
     Task<ListFeedAnalysesResult> ListFeedAnalysesAsync(
         ListFeedAnalysesCommand command,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a specific feed analysis by ID with ownership verification.
+    /// </summary>
+    /// <param name="command">Command containing analysis ID and user ID for ownership check.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result containing the analysis entity or error information.</returns>
+    Task<GetFeedAnalysisResult> GetFeedAnalysisAsync(
+        GetFeedAnalysisCommand command,
+        CancellationToken cancellationToken);
 }

@@ -1,16 +1,16 @@
 namespace RSSVibe.Contracts.FeedAnalyses;
 
 /// <summary>
-/// Detailed feed analysis response. Maps from FeedAnalysis entity with full selectors and metadata.
+/// Detailed feed analysis response including selectors, preflight checks, and warnings.
 /// </summary>
 public sealed record FeedAnalysisDetailResponse(
     Guid AnalysisId,
     string TargetUrl,
     string NormalizedUrl,
-    string Status,
+    FeedAnalysisStatus Status,
     string[] PreflightChecks,
-    Dictionary<string, object>? PreflightDetails,
-    FeedSelectorsDto? Selectors,
+    FeedPreflightDetails PreflightDetails,
+    FeedSelectors? Selectors,
     string[] Warnings,
     string? AiModel,
     Guid? ApprovedFeedId,

@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
 using RSSVibe.Contracts.FeedAnalyses;
 using RSSVibe.Services.FeedAnalyses;
+using System.Security.Claims;
 
 namespace RSSVibe.ApiService.Endpoints.FeedAnalyses;
 
@@ -55,7 +55,7 @@ public static class ListFeedAnalysesEndpoint
         }
 
         var response = new ListFeedAnalysesResponse(
-            Items: result.Items
+            Items: [.. result.Items
                 .Select(i => new FeedAnalysisListItemDto(
                     i.AnalysisId,
                     i.TargetUrl,
@@ -63,8 +63,7 @@ public static class ListFeedAnalysesEndpoint
                     i.Warnings,
                     i.AnalysisStartedAt,
                     i.AnalysisCompletedAt
-                ))
-                .ToArray(),
+                ))],
             Paging: new PagingDto(
                 result.Paging.Skip,
                 result.Paging.Take,

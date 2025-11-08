@@ -242,7 +242,7 @@ internal sealed class FeedAnalysisService(
 
             return new ListFeedAnalysesResult
             {
-                Items = Array.Empty<FeedAnalysisListItem>(),
+                Items = [],
                 Paging = new PagingMetadata(0, 0, 0, false),
                 Success = false,
                 Error = FeedAnalysisError.DatabaseError
@@ -303,5 +303,29 @@ internal sealed class FeedAnalysisService(
         }
 
         return false;
+    }
+
+    public async Task<GetFeedAnalysisResult> GetFeedAnalysisAsync(
+        GetFeedAnalysisCommand command,
+        CancellationToken cancellationToken)
+    {
+        var analysis = await dbContext.FeedAnalyses
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == command.AnalysisId, cancellationToken);
+
+        if (analysis is null)
+        {
+            return GetFeedAnalysisResult.Failed(FeedAnalysisError.NotFound);
+        }
+
+        if (analysis.UserId != command.UserId)
+        {
+            logger.LogWarning(
+                "Unauthorized access attempt to feed analysis {AnalysisId} by user {UserId}. Owner is {OwnerId}",
+                command.AnalysisId, command.UserId, analysis.UserId);
+            return GetFeedAnalysisResult.Failed(FeedAnalysisError.Unauthorized);
+        }
+
+        return GetFeedAnalysisResult.Succeeded(analysis);
     }
 }

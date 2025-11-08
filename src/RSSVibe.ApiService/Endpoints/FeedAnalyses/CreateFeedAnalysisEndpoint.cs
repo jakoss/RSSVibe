@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using RSSVibe.Contracts.FeedAnalyses;
-using RSSVibe.Data.Entities;
 using RSSVibe.Services.FeedAnalyses;
 using System.Security.Claims;
+using DataEntities = RSSVibe.Data.Entities;
 
 namespace RSSVibe.ApiService.Endpoints.FeedAnalyses;
 
@@ -144,41 +144,41 @@ public static class CreateFeedAnalysisEndpoint
     /// <summary>
     /// Converts FeedPreflightChecks flags enum to string array for API response.
     /// </summary>
-    private static string[] ConvertPreflightChecksToStringArray(FeedPreflightChecks checks)
+    private static string[] ConvertPreflightChecksToStringArray(DataEntities.FeedPreflightChecks checks)
     {
-        if (checks == FeedPreflightChecks.None)
+        if (checks == DataEntities.FeedPreflightChecks.None)
         {
             return [];
         }
 
         var result = new List<string>();
 
-        if (checks.HasFlag(FeedPreflightChecks.RequiresJavascript))
+        if (checks.HasFlag(DataEntities.FeedPreflightChecks.RequiresJavascript))
         {
             result.Add("RequiresJavascript");
         }
 
-        if (checks.HasFlag(FeedPreflightChecks.RequiresAuthentication))
+        if (checks.HasFlag(DataEntities.FeedPreflightChecks.RequiresAuthentication))
         {
             result.Add("RequiresAuthentication");
         }
 
-        if (checks.HasFlag(FeedPreflightChecks.Paywalled))
+        if (checks.HasFlag(DataEntities.FeedPreflightChecks.Paywalled))
         {
             result.Add("Paywalled");
         }
 
-        if (checks.HasFlag(FeedPreflightChecks.InvalidMarkup))
+        if (checks.HasFlag(DataEntities.FeedPreflightChecks.InvalidMarkup))
         {
             result.Add("InvalidMarkup");
         }
 
-        if (checks.HasFlag(FeedPreflightChecks.RateLimited))
+        if (checks.HasFlag(DataEntities.FeedPreflightChecks.RateLimited))
         {
             result.Add("RateLimited");
         }
 
-        if (checks.HasFlag(FeedPreflightChecks.UnknownIssue))
+        if (checks.HasFlag(DataEntities.FeedPreflightChecks.UnknownIssue))
         {
             result.Add("UnknownIssue");
         }

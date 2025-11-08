@@ -1,10 +1,10 @@
-using System.Net;
-using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using RSSVibe.Contracts.FeedAnalyses;
 using RSSVibe.Data;
 using RSSVibe.Data.Entities;
-using RSSVibe.Data.Models;
+using System.Net;
+using System.Net.Http.Json;
+using DataModels = RSSVibe.Data.Models;
 
 namespace RSSVibe.ApiService.Tests.Endpoints.FeedAnalyses;
 
@@ -34,8 +34,17 @@ public class ListFeedAnalysesEndpointTests : TestsBase
             TargetUrl = "https://test.example.com/feed",
             NormalizedUrl = "https://test.example.com/feed",
             AnalysisStatus = Data.Entities.FeedAnalysisStatus.Completed,
-            PreflightDetails = new FeedPreflightDetails(),
-            Selectors = new FeedSelectors(),
+            PreflightDetails = new DataModels.FeedPreflightDetails
+            {
+                RequiresJavascript = false,
+                RequiresAuthentication = false,
+                IsPaywalled = false,
+                HasInvalidMarkup = false,
+                IsRateLimited = false,
+                ErrorMessage = null,
+                AdditionalInfo = "{}"
+            },
+            Selectors = new DataModels.FeedSelectors(),
             Warnings = ["Test warning"],
             AnalysisStartedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
             AnalysisCompletedAt = DateTimeOffset.UtcNow,
@@ -78,8 +87,17 @@ public class ListFeedAnalysesEndpointTests : TestsBase
                  TargetUrl = "https://example.com/completed",
                  NormalizedUrl = "https://example.com/completed",
                  AnalysisStatus = Data.Entities.FeedAnalysisStatus.Completed,
-                 PreflightDetails = new FeedPreflightDetails(),
-                 Selectors = new FeedSelectors(),
+                 PreflightDetails = new DataModels.FeedPreflightDetails
+                 {
+                     RequiresJavascript = false,
+                     RequiresAuthentication = false,
+                     IsPaywalled = false,
+                     HasInvalidMarkup = false,
+                     IsRateLimited = false,
+                     ErrorMessage = null,
+                     AdditionalInfo = "{}"
+                 },
+                 Selectors = new DataModels.FeedSelectors(),
                  CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-10),
                  UpdatedAt = DateTimeOffset.UtcNow.AddMinutes(-5)
              },
@@ -90,8 +108,17 @@ public class ListFeedAnalysesEndpointTests : TestsBase
                 TargetUrl = "https://example.com/pending",
                 NormalizedUrl = "https://example.com/pending",
                 AnalysisStatus = Data.Entities.FeedAnalysisStatus.Pending,
-                PreflightDetails = new FeedPreflightDetails(),
-                Selectors = new FeedSelectors(),
+                PreflightDetails = new DataModels.FeedPreflightDetails
+                {
+                    RequiresJavascript = false,
+                    RequiresAuthentication = false,
+                    IsPaywalled = false,
+                    HasInvalidMarkup = false,
+                    IsRateLimited = false,
+                    ErrorMessage = null,
+                    AdditionalInfo = "{}"
+                },
+                Selectors = new DataModels.FeedSelectors(),
                 CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-9),
                 UpdatedAt = DateTimeOffset.UtcNow.AddMinutes(-4)
             }
@@ -128,8 +155,17 @@ public class ListFeedAnalysesEndpointTests : TestsBase
                  TargetUrl = "https://search.example.com/match",
                  NormalizedUrl = "https://search.example.com/match",
                  AnalysisStatus = Data.Entities.FeedAnalysisStatus.Completed,
-                 PreflightDetails = new FeedPreflightDetails(),
-                 Selectors = new FeedSelectors(),
+                 PreflightDetails = new DataModels.FeedPreflightDetails
+                 {
+                     RequiresJavascript = false,
+                     RequiresAuthentication = false,
+                     IsPaywalled = false,
+                     HasInvalidMarkup = false,
+                     IsRateLimited = false,
+                     ErrorMessage = null,
+                     AdditionalInfo = "{}"
+                 },
+                 Selectors = new DataModels.FeedSelectors(),
                  CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-10),
                  UpdatedAt = DateTimeOffset.UtcNow.AddMinutes(-5)
              },
@@ -140,8 +176,17 @@ public class ListFeedAnalysesEndpointTests : TestsBase
                  TargetUrl = "https://other.example.com/no-match",
                  NormalizedUrl = "https://other.example.com/no-match",
                  AnalysisStatus = Data.Entities.FeedAnalysisStatus.Completed,
-                 PreflightDetails = new FeedPreflightDetails(),
-                 Selectors = new FeedSelectors(),
+                 PreflightDetails = new DataModels.FeedPreflightDetails
+                 {
+                     RequiresJavascript = false,
+                     RequiresAuthentication = false,
+                     IsPaywalled = false,
+                     HasInvalidMarkup = false,
+                     IsRateLimited = false,
+                     ErrorMessage = null,
+                     AdditionalInfo = "{}"
+                 },
+                 Selectors = new DataModels.FeedSelectors(),
                  CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-9),
                  UpdatedAt = DateTimeOffset.UtcNow.AddMinutes(-4)
              }
@@ -178,8 +223,17 @@ public class ListFeedAnalysesEndpointTests : TestsBase
                  TargetUrl = "https://example.com/old",
                  NormalizedUrl = "https://example.com/old",
                  AnalysisStatus = Data.Entities.FeedAnalysisStatus.Completed,
-                 PreflightDetails = new FeedPreflightDetails(),
-                 Selectors = new FeedSelectors(),
+                 PreflightDetails = new DataModels.FeedPreflightDetails
+                 {
+                     RequiresJavascript = false,
+                     RequiresAuthentication = false,
+                     IsPaywalled = false,
+                     HasInvalidMarkup = false,
+                     IsRateLimited = false,
+                     ErrorMessage = null,
+                     AdditionalInfo = "{}"
+                 },
+                 Selectors = new DataModels.FeedSelectors(),
                  CreatedAt = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero).AddMinutes(-10),
                  UpdatedAt = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero).AddMinutes(-10)
              },
@@ -190,8 +244,17 @@ public class ListFeedAnalysesEndpointTests : TestsBase
                 TargetUrl = "https://example.com/new",
                 NormalizedUrl = "https://example.com/new",
                 AnalysisStatus = Data.Entities.FeedAnalysisStatus.Completed,
-                PreflightDetails = new FeedPreflightDetails(),
-                Selectors = new FeedSelectors(),
+                PreflightDetails = new DataModels.FeedPreflightDetails
+                {
+                    RequiresJavascript = false,
+                    RequiresAuthentication = false,
+                    IsPaywalled = false,
+                    HasInvalidMarkup = false,
+                    IsRateLimited = false,
+                    ErrorMessage = null,
+                    AdditionalInfo = "{}"
+                },
+                Selectors = new DataModels.FeedSelectors(),
                 CreatedAt = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero).AddMinutes(-5),
                 UpdatedAt = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero).AddMinutes(-5)
             }
@@ -229,8 +292,17 @@ public class ListFeedAnalysesEndpointTests : TestsBase
                 TargetUrl = $"https://test.example.com/feed-{i}",
                 NormalizedUrl = $"https://test.example.com/feed-{i}",
                 AnalysisStatus = Data.Entities.FeedAnalysisStatus.Completed,
-                PreflightDetails = new FeedPreflightDetails(),
-                Selectors = new FeedSelectors(),
+                PreflightDetails = new DataModels.FeedPreflightDetails
+                {
+                    RequiresJavascript = false,
+                    RequiresAuthentication = false,
+                    IsPaywalled = false,
+                    HasInvalidMarkup = false,
+                    IsRateLimited = false,
+                    ErrorMessage = null,
+                    AdditionalInfo = "{}"
+                },
+                Selectors = new DataModels.FeedSelectors(),
                 Warnings = ["Test warning"],
                 AnalysisStartedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
                 AnalysisCompletedAt = DateTimeOffset.UtcNow,
@@ -265,7 +337,7 @@ public class ListFeedAnalysesEndpointTests : TestsBase
         var response = await client.GetAsync(_endpointUrl + "?sort=invalid:sort&skip=0&take=20");
 
         // Assert
-         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
     }
 
     [Test]
@@ -278,7 +350,7 @@ public class ListFeedAnalysesEndpointTests : TestsBase
         var response = await client.GetAsync(_endpointUrl + "?skip=-1&take=20");
 
         // Assert
-         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
     }
 
     [Test]
@@ -292,8 +364,8 @@ public class ListFeedAnalysesEndpointTests : TestsBase
         var responseHigh = await client.GetAsync(_endpointUrl + "?skip=0&take=51");
 
         // Assert
-         await Assert.That(responseLow.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
-         await Assert.That(responseHigh.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+        await Assert.That(responseLow.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+        await Assert.That(responseHigh.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
     }
 
     [Test]
@@ -306,7 +378,7 @@ public class ListFeedAnalysesEndpointTests : TestsBase
         var response = await client.GetAsync(_endpointUrl + "?search=&skip=0&take=20");
 
         // Assert
-         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
     }
 
     [Test]
@@ -356,8 +428,17 @@ public class ListFeedAnalysesEndpointTests : TestsBase
                  TargetUrl = "https://example.com/user-owned",
                  NormalizedUrl = "https://example.com/user-owned",
                  AnalysisStatus = Data.Entities.FeedAnalysisStatus.Completed,
-                 PreflightDetails = new FeedPreflightDetails(),
-                 Selectors = new FeedSelectors(),
+                 PreflightDetails = new DataModels.FeedPreflightDetails
+                 {
+                     RequiresJavascript = false,
+                     RequiresAuthentication = false,
+                     IsPaywalled = false,
+                     HasInvalidMarkup = false,
+                     IsRateLimited = false,
+                     ErrorMessage = null,
+                     AdditionalInfo = "{}"
+                 },
+                 Selectors = new DataModels.FeedSelectors(),
                  CreatedAt = DateTimeOffset.UtcNow,
                  UpdatedAt = DateTimeOffset.UtcNow
              },
@@ -368,8 +449,17 @@ public class ListFeedAnalysesEndpointTests : TestsBase
                  TargetUrl = "https://example.com/other-user",
                  NormalizedUrl = "https://example.com/other-user",
                  AnalysisStatus = Data.Entities.FeedAnalysisStatus.Completed,
-                 PreflightDetails = new FeedPreflightDetails(),
-                 Selectors = new FeedSelectors(),
+                 PreflightDetails = new DataModels.FeedPreflightDetails
+                 {
+                     RequiresJavascript = false,
+                     RequiresAuthentication = false,
+                     IsPaywalled = false,
+                     HasInvalidMarkup = false,
+                     IsRateLimited = false,
+                     ErrorMessage = null,
+                     AdditionalInfo = "{}"
+                 },
+                 Selectors = new DataModels.FeedSelectors(),
                  CreatedAt = DateTimeOffset.UtcNow,
                  UpdatedAt = DateTimeOffset.UtcNow
              }

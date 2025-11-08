@@ -17,6 +17,7 @@ public static class FeedAnalysesGroup
         // Register all endpoints in the feed analyses group
         group.MapCreateFeedAnalysisEndpoint();
         group.MapListFeedAnalysesEndpoint();
+        group.MapGetFeedAnalysisEndpoint();
 
         return endpoints;
     }

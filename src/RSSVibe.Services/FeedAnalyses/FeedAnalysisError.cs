@@ -38,5 +38,15 @@ public enum FeedAnalysisError
     /// <summary>
     /// Preflight checks failed critically (unreachable, requires authentication).
     /// </summary>
-    PreflightFailed
+    PreflightFailed,
+
+    /// <summary>
+    /// The requested feed analysis was not found.
+    /// </summary>
+    NotFound,
+
+    /// <summary>
+    /// The user does not have permission to access this feed analysis.
+    /// </summary>
+    Unauthorized
 }

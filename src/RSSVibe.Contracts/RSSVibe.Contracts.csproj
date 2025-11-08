@@ -1,8 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <PackageReference Include="FluentValidation" />
   </ItemGroup>
     <ItemGroup>
         <Using Include="FluentValidation" />
     </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RSSVibe.Data\RSSVibe.Data.csproj" />
+  </ItemGroup>
 </Project>
