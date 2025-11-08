@@ -1,7 +1,6 @@
 ---
 description: Generate API endpoint implementation plan from endpoint specification
 agent: build
-model: anthropic/claude-sonnet-4-5
 ---
 You are an experienced software architect whose task is to create a detailed implementation plan for a REST API endpoint. Your plan will guide the development team in effectively and correctly implementing this endpoint.
 

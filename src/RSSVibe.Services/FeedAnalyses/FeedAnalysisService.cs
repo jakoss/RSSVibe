@@ -168,6 +168,88 @@ internal sealed class FeedAnalysisService(
         }
     }
 
+    public async Task<ListFeedAnalysesResult> ListFeedAnalysesAsync(
+        ListFeedAnalysesCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var query = dbContext.FeedAnalyses
+                .AsNoTracking()
+                .Where(fa => fa.UserId == command.UserId);
+
+            if (command.Status.HasValue)
+            {
+                var statusValue = (FeedAnalysisStatus)command.Status.Value;
+                query = query.Where(fa => fa.AnalysisStatus == statusValue);
+            }
+
+            if (!string.IsNullOrWhiteSpace(command.Search))
+            {
+                query = query.Where(fa => fa.NormalizedUrl.Contains(command.Search));
+            }
+
+            query = command.Sort?.ToLowerInvariant() switch
+            {
+                "createdat:asc" => query.OrderBy(fa => fa.CreatedAt),
+                "updatedat:asc" => query.OrderBy(fa => fa.UpdatedAt),
+                "updatedat:desc" => query.OrderByDescending(fa => fa.UpdatedAt),
+                _ => query.OrderByDescending(fa => fa.CreatedAt)
+            };
+
+            var totalCount = await query.CountAsync(cancellationToken);
+
+            var items = await query
+                .Skip(command.Skip)
+                .Take(command.Take)
+                .Select(fa => new
+                {
+                    fa.Id,
+                    fa.TargetUrl,
+                    fa.AnalysisStatus,
+                    fa.Warnings,
+                    fa.AnalysisStartedAt,
+                    fa.AnalysisCompletedAt
+                })
+                .ToArrayAsync(cancellationToken);
+
+            var feedAnalysisItems = items.Select(fa => new FeedAnalysisListItem(
+                fa.Id,
+                fa.TargetUrl,
+                (Contracts.FeedAnalyses.FeedAnalysisStatus)fa.AnalysisStatus,
+                fa.Warnings,
+                fa.AnalysisStartedAt,
+                fa.AnalysisCompletedAt
+            )).ToArray();
+
+            var paging = new PagingMetadata(
+                command.Skip,
+                command.Take,
+                totalCount,
+                HasMore: command.Skip + items.Length < totalCount);
+
+            return new ListFeedAnalysesResult
+            {
+                Items = feedAnalysisItems,
+                Paging = paging,
+                Success = true,
+                Error = null
+            };
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to list feed analyses for user {UserId}", command.UserId);
+
+            return new ListFeedAnalysesResult
+            {
+                Items = Array.Empty<FeedAnalysisListItem>(),
+                Paging = new PagingMetadata(0, 0, 0, false),
+                Success = false,
+                Error = FeedAnalysisError.DatabaseError
+            };
+        }
+    }
+
     private static string NormalizeUrl(string url)
     {
         var uri = new Uri(url);

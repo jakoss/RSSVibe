@@ -15,4 +15,8 @@ public interface IFeedAnalysisService
     Task<CreateFeedAnalysisResult> CreateFeedAnalysisAsync(
         CreateFeedAnalysisCommand command,
         CancellationToken cancellationToken = default);
+
+    Task<ListFeedAnalysesResult> ListFeedAnalysesAsync(
+        ListFeedAnalysesCommand command,
+        CancellationToken cancellationToken = default);
 }

@@ -22,6 +22,12 @@ public class TestApplication : WebApplicationFactory<Program>, IAsyncInitializer
     public string TestUserBearerToken { get; private set; } = string.Empty;
 
     /// <summary>
+    /// Gets the test user entity created for integration tests.
+    /// Initialized during test application startup.
+    /// </summary>
+    public ApplicationUser TestUser { get; private set; } = null!;
+
+    /// <summary>
     /// Test user credentials.
     /// </summary>
     public const string TestUserEmail = "test@rssvibe.local";
@@ -71,6 +77,8 @@ public class TestApplication : WebApplicationFactory<Program>, IAsyncInitializer
             throw new InvalidOperationException(
                 $"Failed to create test user: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
         }
+
+        TestUser = testUser;
 
         var (token, _) = jwtTokenGenerator.GenerateAccessToken(testUser);
         TestUserBearerToken = token;

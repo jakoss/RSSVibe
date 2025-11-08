@@ -9,10 +9,10 @@
     }
   },
   "keybinds": {
-    "messages_half_page_up": "up",
-    "messages_half_page_down": "down",
-    "history_previous": "ctrl+up",
-    "history_next": "ctrl+down"
+    "messages_half_page_up": "ctrl+shift+up",
+    "messages_half_page_down": "ctrl+shift+down",
+    "history_previous": "up",
+    "history_next": "down"
   },
     "mcp": {
         "microsoft_docs_mcp": {

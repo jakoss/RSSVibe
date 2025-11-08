@@ -1,7 +1,6 @@
 ---
 description: Implement API endpoint following the specification
 agent: build
-model: github-copilot/grok-code-fast-1
 ---
 Your task is to implement a REST API endpoint based on the provided implementation plan. Your goal is to create a solid and well-organized implementation that includes appropriate validation, error handling, and follows all logical steps described in the plan.
 
