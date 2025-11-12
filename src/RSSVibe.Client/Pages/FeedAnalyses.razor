@@ -1,0 +1,237 @@
+@page "/feed-analyses"
+@using RSSVibe.Contracts
+@using RSSVibe.Contracts.FeedAnalyses
+@attribute [Authorize]
+@inject IRSSVibeApiClient ApiClient
+
+<PageTitle>Feed Analyses - RSSVibe</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudPaper Elevation="2" Class="pa-6">
+        <MudGrid>
+            <MudItem xs="12">
+                <MudText Typo="Typo.h4" GutterBottom="true">
+                    Feed Analyses
+                </MudText>
+            </MudItem>
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Error" CloseIconClicked="() => errorMessage = null" ShowCloseIcon="true">
+                        @errorMessage
+                    </MudAlert>
+                </MudItem>
+            }
+
+            @if (successMessage != null)
+            {
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Success" CloseIconClicked="() => successMessage = null" ShowCloseIcon="true">
+                        @successMessage
+                    </MudAlert>
+                </MudItem>
+            }
+
+            <!-- Create New Analysis Form -->
+            <MudItem xs="12">
+                <MudExpansionPanels>
+                    <MudExpansionPanel Text="Create New Feed Analysis">
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudTextField 
+                                    @bind-Value="newAnalysisUrl"
+                                    Label="Feed URL"
+                                    Variant="Variant.Outlined"
+                                    Placeholder="https://example.com/feed"
+                                    Disabled="isCreating" />
+                            </MudItem>
+                            <MudItem xs="12" md="3">
+                                <MudSelect 
+                                    @bind-Value="newAnalysisModel"
+                                    Label="AI Model"
+                                    Variant="Variant.Outlined"
+                                    Disabled="isCreating">
+                                    <MudSelectItem Value="@("gpt-4")">GPT-4</MudSelectItem>
+                                    <MudSelectItem Value="@("gpt-3.5-turbo")">GPT-3.5 Turbo</MudSelectItem>
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" md="3">
+                                <MudButton 
+                                    OnClick="CreateAnalysisAsync"
+                                    Variant="Variant.Filled"
+                                    Color="Color.Primary"
+                                    FullWidth="true"
+                                    Disabled="isCreating || string.IsNullOrWhiteSpace(newAnalysisUrl)">
+                                    @if (isCreating)
+                                    {
+                                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                        <span>Creating...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Create Analysis</span>
+                                    }
+                                </MudButton>
+                            </MudItem>
+                        </MudGrid>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+            </MudItem>
+
+            <!-- Analyses List -->
+            <MudItem xs="12" Class="mt-6">
+                @if (isLoading)
+                {
+                    <MudProgressLinear Indeterminate="true" />
+                }
+                else if (analyses == null || !analyses.Any())
+                {
+                    <MudAlert Severity="Severity.Info">
+                        No feed analyses found. Create your first analysis above!
+                    </MudAlert>
+                }
+                else
+                {
+                    <MudTable Items="analyses" Hover="true" Breakpoint="Breakpoint.Sm">
+                        <HeaderContent>
+                            <MudTh>Target URL</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Warnings</MudTh>
+                            <MudTh>Created</MudTh>
+                            <MudTh>Completed</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Target URL">
+                                <MudLink Href="@context.TargetUrl" Target="_blank">
+                                    @TruncateUrl(context.TargetUrl)
+                                </MudLink>
+                            </MudTd>
+                            <MudTd DataLabel="Status">
+                                <MudChip T="string"
+                                    Size="Size.Small"
+                                    Color="@GetStatusColor(context.Status)">
+                                    @context.Status
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Warnings">@context.Warnings.Length</MudTd>
+                            <MudTd DataLabel="Created">@(context.AnalysisStartedAt?.LocalDateTime.ToString("g") ?? "-")</MudTd>
+                            <MudTd DataLabel="Completed">
+                                @(context.AnalysisCompletedAt?.LocalDateTime.ToString("g") ?? "-")
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private List<FeedAnalysisListItemDto>? analyses;
+    private bool isLoading = true;
+    private bool isCreating;
+    private string? errorMessage;
+    private string? successMessage;
+    private string newAnalysisUrl = string.Empty;
+    private string newAnalysisModel = "gpt-4";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAnalysesAsync();
+    }
+
+    private async Task LoadAnalysesAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var request = new ListFeedAnalysesRequest(
+                Status: null,
+                Sort: "createdAt:desc",
+                Skip: 0,
+                Take: 50,
+                Search: null
+            );
+
+            var result = await ApiClient.FeedAnalyses.ListAsync(request);
+
+            if (result.IsSuccess)
+            {
+                analyses = result.Data!.Items.ToList();
+            }
+            else
+            {
+                errorMessage = result.ErrorDetail ?? result.ErrorTitle ?? "Failed to load feed analyses.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CreateAnalysisAsync()
+    {
+        isCreating = true;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            var request = new CreateFeedAnalysisRequest(
+                TargetUrl: newAnalysisUrl,
+                AiModel: newAnalysisModel,
+                ForceReanalysis: false
+            );
+
+            var result = await ApiClient.FeedAnalyses.CreateAsync(request);
+
+            if (result.IsSuccess)
+            {
+                successMessage = $"Analysis created successfully! ID: {result.Data!.AnalysisId}";
+                newAnalysisUrl = string.Empty;
+                
+                // Reload the list
+                await LoadAnalysesAsync();
+            }
+            else
+            {
+                errorMessage = result.ErrorDetail ?? result.ErrorTitle ?? "Failed to create analysis.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            isCreating = false;
+        }
+    }
+
+    private string TruncateUrl(string url)
+    {
+        if (url.Length <= 50)
+            return url;
+        
+        return url[..47] + "...";
+    }
+
+    private Color GetStatusColor(string status)
+    {
+        return status.ToLowerInvariant() switch
+        {
+            "completed" => Color.Success,
+            "pending" => Color.Info,
+            "failed" => Color.Error,
+            _ => Color.Default
+        };
+    }
+}

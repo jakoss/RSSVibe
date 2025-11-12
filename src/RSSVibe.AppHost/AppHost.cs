@@ -17,16 +17,17 @@ var migrationService = builder.AddProject<Projects.RSSVibe_MigrationService>("mi
 
 var apiService = builder.AddProject<Projects.RSSVibe_ApiService>("apiservice")
     .WithHttpHealthCheck("/health")
-    .WithUrl("/scalar/v1", "Scalar") // TODO: add "normal" endpoint url as well
+    .WithUrl("/scalar/v1", "Scalar") // TODO: Add endpoint for the api itself
     .WithReference(rssvibeDb)
     .WaitFor(rssvibeDb)
     .WithReference(migrationService)
     .WaitForCompletion(migrationService);
 
-builder.AddProject<Projects.RSSVibe_Web>("webfrontend")
-    .WithExternalHttpEndpoints()
-    .WithHttpHealthCheck("/health")
-    .WithReference(apiService)
-    .WaitFor(apiService);
+// Standalone Blazor WebAssembly frontend
+var frontend = builder.AddStandaloneBlazorWebAssemblyProject<Projects.RSSVibe_Client>("frontend")
+    .WithReference(apiService);
+
+// Enable CORS for the frontend
+apiService.WithReference(frontend);
 
 builder.Build().Run();

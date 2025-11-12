@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+    <ItemGroup>
+        <PackageReference Include="Blazored.LocalStorage" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication"/>
+        <PackageReference Include="MudBlazor"/>
+        <PackageReference Include="Aspire4Wasm.WebAssembly" />
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\RSSVibe.Contracts\RSSVibe.Contracts.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="wwwroot\css\app.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\sample-data\weather.json" />
+    </ItemGroup>
+
+</Project>

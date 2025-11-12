@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace RSSVibe.Services.Auth;
 
 /// <summary>
@@ -32,4 +34,36 @@ public sealed class JwtConfiguration
     /// Default is 30 days.
     /// </summary>
     public int RefreshTokenExpirationDays { get; init; } = 30;
+
+    /// <summary>
+    /// Gets or sets the cookie configuration for token storage.
+    /// </summary>
+    public CookieConfiguration Cookie { get; init; } = new();
+}
+
+/// <summary>
+/// Configuration options for JWT token storage in cookies.
+/// </summary>
+public sealed class CookieConfiguration
+{
+    /// <summary>
+    /// Gets or sets the SameSite attribute for cookies.
+    /// Default is Lax for better security while allowing same-site requests.
+    /// Use None when API and client are on different domains.
+    /// </summary>
+    public SameSiteMode SameSite { get; init; } = SameSiteMode.Lax;
+
+    /// <summary>
+    /// Gets or sets whether the Secure flag should be required on cookies.
+    /// When true, cookies are only sent over HTTPS.
+    /// Default is true for production safety.
+    /// </summary>
+    public bool RequireSecure { get; init; } = true;
+
+    /// <summary>
+    /// Gets or sets the domain for the cookie. If null, the domain from the request is used.
+    /// Set this if you want cookies shared across subdomains (e.g., ".example.com").
+    /// Default is null (use request host).
+    /// </summary>
+    public string? Domain { get; init; }
 }

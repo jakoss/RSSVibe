@@ -6,7 +6,8 @@ namespace RSSVibe.Contracts.Auth;
 public sealed record LoginRequest(
     string Email,
     string Password,
-    bool RememberMe
+    bool RememberMe,
+    bool UseCookieAuth = true
 )
 {
     public sealed class Validator : AbstractValidator<LoginRequest>
@@ -22,6 +23,9 @@ public sealed record LoginRequest(
 
             RuleFor(x => x.RememberMe)
                 .NotNull().WithMessage("RememberMe must be specified");
+
+            RuleFor(x => x.UseCookieAuth)
+                .NotNull().WithMessage("UseCookieAuth must be specified");
         }
     }
 }

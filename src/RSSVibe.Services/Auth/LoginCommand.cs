@@ -6,5 +6,6 @@ namespace RSSVibe.Services.Auth;
 public sealed record LoginCommand(
     string Email,
     string Password,
-    bool RememberMe
+    bool RememberMe,
+    bool UseCookieAuth = true
 );

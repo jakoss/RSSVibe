@@ -6,6 +6,7 @@
     <ProjectReference Include="..\RSSVibe.ServiceDefaults\RSSVibe.ServiceDefaults.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Aspire4Wasm.WebApi" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />

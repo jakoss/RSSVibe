@@ -1,0 +1,142 @@
+@page "/login"
+@using RSSVibe.Client.Services
+@using RSSVibe.Contracts
+@using RSSVibe.Contracts.Auth
+@using Blazored.LocalStorage
+@inject IRSSVibeApiClient ApiClient
+@inject CustomAuthStateProvider AuthStateProvider
+@inject ILocalStorageService LocalStorage
+@inject NavigationManager Navigation
+
+<PageTitle>Login - RSSVibe</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+    <MudPaper Elevation="3" Class="pa-8">
+        <MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">
+            RSSVibe Login
+        </MudText>
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4">@errorMessage</MudAlert>
+        }
+
+        <EditForm Model="@model" OnValidSubmit="HandleLoginAsync" FormName="LoginForm">
+            <DataAnnotationsValidator />
+            
+            <MudTextField 
+                @bind-Value="model.Email"
+                Label="Email"
+                Variant="Variant.Outlined"
+                InputType="InputType.Email"
+                Required="true"
+                Disabled="isLoading"
+                Class="mb-4" />
+
+            <MudTextField 
+                @bind-Value="model.Password"
+                Label="Password"
+                Variant="Variant.Outlined"
+                InputType="InputType.Password"
+                Required="true"
+                Disabled="isLoading"
+                Class="mb-4" />
+
+            <MudCheckBox 
+                @bind-Value="model.RememberMe"
+                Label="Remember Me"
+                Disabled="isLoading"
+                Class="mb-4" />
+
+            <MudButton 
+                ButtonType="ButtonType.Submit"
+                Variant="Variant.Filled"
+                Color="Color.Primary"
+                FullWidth="true"
+                Disabled="isLoading">
+                @if (isLoading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>Signing in...</span>
+                }
+                else
+                {
+                    <span>Sign In</span>
+                }
+            </MudButton>
+        </EditForm>
+
+        <MudDivider Class="my-6" />
+
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="mt-4">
+            Demo Credentials:
+            <MudLink OnClick="FillDemoCredentials" Disabled="isLoading">
+                Click to fill
+            </MudLink>
+        </MudText>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private readonly LoginModel model = new();
+    private bool isLoading;
+    private string? errorMessage;
+
+    private class LoginModel
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public bool RememberMe { get; set; }
+    }
+
+    private async Task HandleLoginAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            // Use cookie-based authentication for frontend. When UseCookieAuth=true, the backend
+            // returns Set-Cookie headers with HttpOnly, Secure, and SameSite flags.
+            // The browser automatically handles cookie storage and transmission.
+            var request = new LoginRequest(
+                Email: model.Email,
+                Password: model.Password,
+                RememberMe: model.RememberMe,
+                UseCookieAuth: true
+            );
+
+            var result = await ApiClient.Auth.LoginAsync(request);
+
+            if (result.IsSuccess)
+            {
+                // Refresh authentication state from server via /auth/profile endpoint.
+                // The browser has automatically stored HttpOnly cookies from the login response.
+                // This syncs the UI with the authenticated state and caches it locally.
+                await AuthStateProvider.RefreshAuthStateAsync(LocalStorage);
+
+                // Navigate to feed analyses page
+                Navigation.NavigateTo("/feed-analyses");
+            }
+            else
+            {
+                errorMessage = result.ErrorDetail ?? result.ErrorTitle ?? "Login failed. Please check your credentials.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void FillDemoCredentials()
+    {
+        model.Email = "test@test.com";
+        model.Password = "P@ssw0rd1234";
+        model.RememberMe = true;
+    }
+}
