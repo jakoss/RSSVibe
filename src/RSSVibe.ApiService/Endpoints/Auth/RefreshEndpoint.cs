@@ -16,13 +16,13 @@ public static class RefreshEndpoint
     {
         group.MapPost("/refresh", HandleAsync)
             .WithName("RefreshToken")
-            .WithOpenApi(operation =>
+            .AddOpenApiOperationTransformer((operation, _, _) =>
             {
                 operation.Summary = "Refresh JWT access token";
                 operation.Description = "Exchanges a valid refresh token for a new access token and refresh token pair. " +
                     "Implements token rotation for security - the old refresh token is invalidated. " +
                     "Detects and prevents replay attacks by revoking all user tokens if a used token is presented.";
-                return operation;
+                return Task.CompletedTask;
             })
             .Produces<RefreshTokenResponse>()
             .ProducesProblem(StatusCodes.Status400BadRequest)

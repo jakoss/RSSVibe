@@ -13,11 +13,11 @@ public static class GetFeedAnalysisEndpoint
     {
         group.MapGet("/{analysisId:guid}", HandleAsync)
             .WithName("GetFeedAnalysis")
-            .WithOpenApi(operation =>
+            .AddOpenApiOperationTransformer((operation, _, _) =>
             {
                 operation.Summary = "Get feed analysis details";
                 operation.Description = "Retrieves the complete analysis payload including selectors, preflight checks, and warnings.";
-                return operation;
+                return Task.CompletedTask;
             })
             .RequireAuthorization()
             .Produces<FeedAnalysisDetailResponse>(StatusCodes.Status200OK)

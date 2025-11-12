@@ -16,13 +16,13 @@ public static class LoginEndpoint
     {
         group.MapPost("/login", HandleAsync)
             .WithName("Login")
-            .WithOpenApi(operation =>
+            .AddOpenApiOperationTransformer((operation, _, _) =>
             {
                 operation.Summary = "Authenticate user credentials";
                 operation.Description = "Authenticates user with email and password. " +
                     "Returns JWT access token and refresh token for subsequent API calls. " +
                     "Supports 'remember me' to extend refresh token lifetime to 30 days.";
-                return operation;
+                return Task.CompletedTask;
             })
             .Produces<LoginResponse>()
             .ProducesProblem(StatusCodes.Status400BadRequest)

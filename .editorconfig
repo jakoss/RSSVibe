@@ -355,6 +355,7 @@ dotnet_diagnostic.ide1006.severity = suggestion
 # This pattern isn't bad, but in many cases the output line is super long and hard to read
 dotnet_diagnostic.ide0270.severity = suggestion
 dotnet_diagnostic.CA2208.severity = suggestion
+dotnet_diagnostic.CA1873.severity = suggestion
 dotnet_diagnostic.IDE0072.severity = suggestion
 dotnet_diagnostic.IDE0010.severity = suggestion
 

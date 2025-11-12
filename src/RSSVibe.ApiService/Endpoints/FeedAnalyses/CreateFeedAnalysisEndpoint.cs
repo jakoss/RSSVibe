@@ -20,12 +20,12 @@ public static class CreateFeedAnalysisEndpoint
         group.MapPost("/", HandleAsync)
             .WithName("CreateFeedAnalysis")
             .RequireAuthorization()
-            .WithOpenApi(operation =>
+            .AddOpenApiOperationTransformer((operation, _, _) =>
             {
                 operation.Summary = "Create a new feed analysis";
                 operation.Description = "Initiates AI-powered analysis and preflight checks for a submitted URL. " +
                                         "Returns immediately with 202 Accepted and provides location header for polling.";
-                return operation;
+                return Task.CompletedTask;
             });
 
         return group;

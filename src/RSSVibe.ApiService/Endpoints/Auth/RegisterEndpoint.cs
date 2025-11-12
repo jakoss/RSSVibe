@@ -19,12 +19,12 @@ public static class RegisterEndpoint
     {
         group.MapPost("/register", HandleAsync)
             .WithName("Register")
-            .WithOpenApi(operation =>
+            .AddOpenApiOperationTransformer((operation, _, _) =>
             {
                 operation.Summary = "Register a new user account";
                 operation.Description = "Creates a new user account using email and password. " +
                                        "Disabled in production when root user provisioning is enabled.";
-                return operation;
+                return Task.CompletedTask;
             });
 
         return group;

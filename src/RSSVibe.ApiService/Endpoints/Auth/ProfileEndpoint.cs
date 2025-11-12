@@ -18,13 +18,13 @@ public static class ProfileEndpoint
         group.MapGet("/profile", HandleAsync)
             .WithName("GetUserProfile")
             .RequireAuthorization()
-            .WithOpenApi(operation =>
+            .AddOpenApiOperationTransformer((operation, _, _) =>
             {
                 operation.Summary = "Get current user profile";
                 operation.Description = "Retrieves the authenticated user's profile including " +
                     "email, display name, roles, and security posture metadata. " +
                     "Requires valid JWT authentication token.";
-                return operation;
+                return Task.CompletedTask;
             })
             .Produces<ProfileResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)

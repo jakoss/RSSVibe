@@ -3,7 +3,7 @@ This document outlines the technologies chosen for the RSSVibe project and expla
 
 ## 1. Runtime and Language
 
-- **.NET 9 & C# 13**: 
+- **.NET 10 & C# 14**: 
   - The project is built using the latest .NET runtime and C# language features. This provides a high-performance, modern, and secure runtime environment for both the backend API and any heavy computational tasks.
 
 ## 2. Frontend
@@ -31,7 +31,7 @@ This document outlines the technologies chosen for the RSSVibe project and expla
 
 ## 5. Object-Relational Mapping (ORM)
 
-- **Entity Framework Core 9**: 
+- **Entity Framework Core 10**: 
   - Entity Framework Core provides a convenient and efficient way to interact with the PostgreSQL database, allowing for code-first development and LINQ-based queries.
 
 ## 6. Caching
@@ -65,8 +65,8 @@ This document outlines the technologies chosen for the RSSVibe project and expla
 
 The updated tech stack is designed to meet both immediate MVP demands and long-term goals of performance, scalability, and innovation:
 
-- **Rapid Development and Robustness**: Leveraging .NET 9 and C# 13, along with ASP.NET Core and Blazor, the stack accelerates development while ensuring a robust, secure foundation.
-- **Efficient Data Management & Scalability**: PostgreSQL 18 combined with Entity Framework Core 9 guarantees efficient data handling, while an advanced caching strategy using Redis 8 paired with FusionCache (implementing HybridCache) optimizes performance under high concurrency.
+- **Rapid Development and Robustness**: Leveraging .NET 10 and C# 14, along with ASP.NET Core and Blazor, the stack accelerates development while ensuring a robust, secure foundation.
+- **Efficient Data Management & Scalability**: PostgreSQL 18 combined with Entity Framework Core 10 guarantees efficient data handling, while an advanced caching strategy using Redis 8 paired with FusionCache (implementing HybridCache) optimizes performance under high concurrency.
 - **Advanced AI & Automation**: Integration of SemanticKernel (or Microsoft Agentic Framework) and OpenRouter enables cutting-edge AI for content analysis and automated configuration, enhancing the system's intelligence.
 - **Reliable Task Scheduling**: TickerQ manages periodic background tasks seamlessly, ensuring operational efficiency and timely content parsing.
 - **Optimized Development Experience**: .NET Aspire delivers a consistent and streamlined local development environment, supporting rapid iterations and comprehensive testing.

@@ -12,11 +12,11 @@ public static class ListFeedAnalysesEndpoint
         group.MapGet("/", HandleAsync)
             .WithName("ListFeedAnalyses")
             .RequireAuthorization()
-            .WithOpenApi(op =>
+            .AddOpenApiOperationTransformer((operation, _, _) =>
             {
-                op.Summary = "List feed analyses for current user";
-                op.Description = "Returns paginated list of feed analyses with filtering, sorting, and search capabilities.";
-                return op;
+                operation.Summary = "List feed analyses for current user";
+                operation.Description = "Returns paginated list of feed analyses with filtering, sorting, and search capabilities.";
+                return Task.CompletedTask;
             });
 
         return group;

@@ -64,7 +64,7 @@ When handling questions around how to work with native Microsoft technologies, s
 
 ## C# / .NET CODING STANDARDS
 
-**Runtime**: C# 13 on .NET SDK 9.x (see `global.json`)
+**Runtime**: C# 14 on .NET SDK 10.x (see `global.json`)
 
 ### Code Style
 - MUST keep code warning-free (`TreatWarningsAsErrors=true`)

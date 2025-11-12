@@ -17,11 +17,11 @@ public static class ChangePasswordEndpoint
     {
         group.MapPost("/change-password", HandleAsync)
             .WithName("ChangePassword")
-            .WithOpenApi(operation =>
+            .AddOpenApiOperationTransformer((operation, _, _) =>
             {
                 operation.Summary = "Change user password";
                 operation.Description = "Changes the authenticated user's password after verifying the current password. Revokes all existing refresh tokens for security.";
-                return operation;
+                return Task.CompletedTask;
             })
             .RequireAuthorization()
             .RequireRateLimiting("password-change")

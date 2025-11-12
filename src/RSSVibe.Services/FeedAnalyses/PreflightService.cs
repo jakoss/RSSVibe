@@ -9,7 +9,7 @@ namespace RSSVibe.Services.FeedAnalyses;
 /// <summary>
 /// Service for performing preflight checks on target URLs.
 /// </summary>
-internal sealed class PreflightService(
+internal sealed partial class PreflightService(
     IHttpClientFactory httpClientFactory,
     ILogger<PreflightService> logger) : IPreflightService
 {
@@ -164,9 +164,8 @@ internal sealed class PreflightService(
         {
             var bodyContent = htmlContent[bodyStart..bodyEnd];
             // If body has very little content but many scripts, likely SPA
-            var scriptCount = System.Text.RegularExpressions.Regex.Matches(bodyContent, "<script",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase).Count;
-            var textContent = System.Text.RegularExpressions.Regex.Replace(bodyContent, "<[^>]+>", "").Trim();
+            var scriptCount = ScriptCountRegex().Count(bodyContent);
+            var textContent = ExtractTextContentRegex().Replace(bodyContent, "").Trim();
             if (scriptCount > 3 && textContent.Length < 200)
             {
                 return true;
@@ -222,4 +221,9 @@ internal sealed class PreflightService(
             return false;
         }
     }
+
+    [System.Text.RegularExpressions.GeneratedRegex("<[^>]+>")]
+    private static partial System.Text.RegularExpressions.Regex ExtractTextContentRegex();
+    [System.Text.RegularExpressions.GeneratedRegex("<script", System.Text.RegularExpressions.RegexOptions.IgnoreCase, "en-US")]
+    private static partial System.Text.RegularExpressions.Regex ScriptCountRegex();
 }
