@@ -16,12 +16,12 @@ internal sealed class FeedAnalysisConfiguration : IEntityTypeConfiguration<FeedA
 
         builder.Property(x => x.PreflightChecks).HasConversion<int>();
 
-        builder.OwnsOne(x => x.PreflightDetails, detailsBuilder =>
+        builder.ComplexProperty(x => x.PreflightDetails, detailsBuilder =>
         {
             detailsBuilder.ToJson();
         });
 
-        builder.OwnsOne(x => x.Selectors, selectorsBuilder =>
+        builder.ComplexProperty(x => x.Selectors, selectorsBuilder =>
         {
             selectorsBuilder.ToJson();
         });

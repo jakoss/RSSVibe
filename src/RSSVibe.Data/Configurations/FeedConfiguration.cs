@@ -16,7 +16,7 @@ internal sealed class FeedConfiguration : IEntityTypeConfiguration<Feed>
 
         builder.Property(x => x.TtlMinutes).HasDefaultValue((short)60);
 
-        builder.OwnsOne(x => x.Selectors, selectorsBuilder =>
+        builder.ComplexProperty(x => x.Selectors, selectorsBuilder =>
         {
             selectorsBuilder.ToJson();
         });

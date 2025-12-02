@@ -16,7 +16,7 @@ internal sealed class FeedItemConfiguration : IEntityTypeConfiguration<FeedItem>
         builder.Property(x => x.Title).HasMaxLength(512);
         builder.Property(x => x.Summary).HasMaxLength(2048);
 
-        builder.OwnsOne(x => x.RawMetadata, metadataBuilder =>
+        builder.ComplexProperty(x => x.RawMetadata, metadataBuilder =>
         {
             metadataBuilder.ToJson();
         });

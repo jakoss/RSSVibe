@@ -10,7 +10,7 @@ internal sealed class FeedParseRunConfiguration : IEntityTypeConfiguration<FeedP
     {
         builder.Property(x => x.Id).ValueGeneratedNever();
 
-        builder.OwnsOne(x => x.ResponseHeaders, headersBuilder =>
+        builder.ComplexProperty(x => x.ResponseHeaders, headersBuilder =>
         {
             headersBuilder.ToJson();
         });
