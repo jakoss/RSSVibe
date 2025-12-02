@@ -7,7 +7,7 @@ Your task is to implement a REST API endpoint based on the provided implementati
 You will be given a detailed implementation plan that includes all the necessary information to implement the endpoint. You will need to follow the rules described in the project AGENTS.md to ensure that the implementation is consistent with the project's architecture and design principles.
 
 <api_implementation_plan>
-The implementation plan for the user profile endpoint is located in file $ARGUMENTS.
+The implementation plan for the endpoint is located in file $ARGUMENTS.
 </api_implementation_plan>
 
 Additionally, look at this additional information about the project context and implementation guidelines:
