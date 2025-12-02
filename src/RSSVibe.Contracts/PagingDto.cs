@@ -1,7 +1,7 @@
-namespace RSSVibe.Contracts.FeedAnalyses;
+namespace RSSVibe.Contracts;
 
 /// <summary>
-/// Standard pagination metadata for list responses.
+/// Pagination metadata for list responses.
 /// </summary>
 public sealed record PagingDto(
     int Skip,

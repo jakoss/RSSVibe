@@ -1,11 +1,9 @@
-using RSSVibe.Contracts.FeedAnalyses;
-
 namespace RSSVibe.Contracts.Feeds;
 
 /// <summary>
-/// Response with paginated list of feeds. Maps from Feed entities.
+/// Response containing paginated list of feeds.
 /// </summary>
 public sealed record ListFeedsResponse(
-    FeedListItemDto[] Items,
-    PagingDto Paging
+    IReadOnlyList<FeedListItemDto> Items,
+    RSSVibe.Contracts.PagingDto Paging
 );

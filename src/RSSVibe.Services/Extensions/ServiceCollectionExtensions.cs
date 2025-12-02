@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using RSSVibe.Services.Auth;
 using RSSVibe.Services.FeedAnalyses;
+using RSSVibe.Services.Feeds;
 
 namespace RSSVibe.Services.Extensions;
 
@@ -24,8 +25,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IFeedAnalysisService, FeedAnalysisService>();
         services.AddScoped<IPreflightService, PreflightService>();
 
-        // Future services will be added here
-        // services.AddScoped<IFeedService, FeedService>();
+        // Register feed services
+        services.AddScoped<IFeedService, FeedService>();
 
         return services;
     }

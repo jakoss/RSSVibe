@@ -1,5 +1,6 @@
 using RSSVibe.ApiService.Endpoints.Auth;
 using RSSVibe.ApiService.Endpoints.FeedAnalyses;
+using RSSVibe.ApiService.Endpoints.Feeds;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 
 namespace RSSVibe.ApiService.Endpoints;
@@ -21,10 +22,10 @@ public static class ApiGroup
         // Register all feature groups
         group.MapAuthGroup();
         group.MapFeedAnalysesGroup();
+        group.MapFeedsGroup();
         group.AddFluentValidationAutoValidation();
 
         // Future feature groups can be added here
-        // group.MapFeedsGroup();
         // group.MapUsersGroup();
 
         return endpoints;

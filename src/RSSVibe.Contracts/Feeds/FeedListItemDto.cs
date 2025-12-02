@@ -1,7 +1,7 @@
 namespace RSSVibe.Contracts.Feeds;
 
 /// <summary>
-/// Feed item for list responses. Subset of Feed entity data.
+/// Summary information for a feed in list view.
 /// </summary>
 public sealed record FeedListItemDto(
     Guid FeedId,
@@ -14,13 +14,13 @@ public sealed record FeedListItemDto(
     UpdateIntervalDto UpdateInterval,
     short TtlMinutes,
     string? Etag,
-    DateTimeOffset? LastModified,
-    DateTimeOffset? LastParsedAt,
-    DateTimeOffset? NextParseAfter,
+    DateTime? LastModified,
+    DateTime? LastParsedAt,
+    DateTime? NextParseAfter,
     string? LastParseStatus,
     int PendingParseCount,
     Guid? AnalysisId,
-    DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt,
+    DateTime CreatedAt,
+    DateTime UpdatedAt,
     string RssUrl
 );

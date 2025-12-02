@@ -1,4 +1,4 @@
-using RSSVibe.Contracts.FeedAnalyses;
+using RSSVibe.Contracts;
 
 namespace RSSVibe.Contracts.FeedParseRuns;
 
@@ -7,5 +7,5 @@ namespace RSSVibe.Contracts.FeedParseRuns;
 /// </summary>
 public sealed record ListFeedParseRunItemsResponse(
     FeedParseRunItemDto[] Items,
-    PagingDto Paging
+    RSSVibe.Contracts.PagingDto Paging
 );

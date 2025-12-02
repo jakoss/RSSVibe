@@ -121,3 +121,4 @@ builder.Services.AddRssVibeServices(); // Single call registers all services
 - MUST use positional records for all contract models (immutability and clarity)
 - MUST document contract changes in commit messages and ADRs when adding new endpoints or modifying existing ones
 - Contracts include DTOs for API requests, responses, and domain models exposed to clients
+- **Shared contracts** like `PagingDto` are placed in the root `RSSVibe.Contracts` namespace and reused across multiple feature areas (e.g., Feeds, FeedAnalyses, FeedItems) to ensure consistency

@@ -1,4 +1,4 @@
-using RSSVibe.Contracts.FeedAnalyses;
+using RSSVibe.Contracts;
 
 namespace RSSVibe.Contracts.FeedItems;
 
@@ -7,5 +7,5 @@ namespace RSSVibe.Contracts.FeedItems;
 /// </summary>
 public sealed record ListFeedItemsResponse(
     FeedItemDto[] Items,
-    PagingDto Paging
+    RSSVibe.Contracts.PagingDto Paging
 );

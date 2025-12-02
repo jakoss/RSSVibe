@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using RSSVibe.Contracts;
 using RSSVibe.Contracts.FeedAnalyses;
 using RSSVibe.Services.FeedAnalyses;
 using System.Security.Claims;
@@ -64,7 +65,7 @@ public static class ListFeedAnalysesEndpoint
                     i.AnalysisStartedAt,
                     i.AnalysisCompletedAt
                 ))],
-            Paging: new PagingDto(
+            Paging: new RSSVibe.Contracts.PagingDto(
                 result.Paging.Skip,
                 result.Paging.Take,
                 result.Paging.TotalCount,
