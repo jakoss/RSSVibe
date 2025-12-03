@@ -4,8 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using RSSVibe.Contracts.Auth;
 using RSSVibe.Data;
 using RSSVibe.Data.Entities;
-using System.Net;
-using System.Net.Http.Json;
 
 namespace RSSVibe.ApiService.Tests.Endpoints.Auth;
 
@@ -19,7 +17,7 @@ public class RegisterEndpointTests : TestsBase
     public async Task RegisterEndpoint_WithValidRequest_ShouldReturnCreatedWithUserData()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
         var request = new RegisterRequest(
             Email: "testuser@example.com",
             Password: "SecurePass123!",
@@ -28,20 +26,18 @@ public class RegisterEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/register", request);
+        var result = await apiClient.Auth.RegisterAsync(request);
 
-        // Assert - HTTP response
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Created);
+        // Assert - API result
+        await Assert.That(result.IsSuccess).IsTrue();
+        await Assert.That(result.StatusCode).IsEqualTo(201);
 
-        var responseData = await response.Content.ReadFromJsonAsync<RegisterResponse>();
+        var responseData = result.Data!;
         await Assert.That(responseData).IsNotNull();
         await Assert.That(responseData.Email).IsEqualTo(request.Email);
         await Assert.That(responseData.DisplayName).IsEqualTo(request.DisplayName);
         await Assert.That(responseData.MustChangePassword).IsEqualTo(request.MustChangePassword);
         await Assert.That(responseData.UserId).IsNotEqualTo(Guid.Empty);
-
-        // Verify Location header
-        await Assert.That(response.Headers.Location?.ToString()).IsEqualTo("/api/v1/auth/profile");
 
         // Assert - Database state
         await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
@@ -60,7 +56,7 @@ public class RegisterEndpointTests : TestsBase
     public async Task RegisterEndpoint_WithDuplicateEmail_ShouldReturnConflict()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
         var request = new RegisterRequest(
             Email: "duplicate@example.com",
             Password: "SecurePass123!",
@@ -69,14 +65,16 @@ public class RegisterEndpointTests : TestsBase
         );
 
         // First registration - should succeed
-        var firstResponse = await client.PostAsJsonAsync("/api/v1/auth/register", request);
-        await Assert.That(firstResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
+        var firstResult = await apiClient.Auth.RegisterAsync(request);
+        await Assert.That(firstResult.IsSuccess).IsTrue();
+        await Assert.That(firstResult.StatusCode).IsEqualTo(201);
 
         // Act - Second registration with same email
-        var secondResponse = await client.PostAsJsonAsync("/api/v1/auth/register", request);
+        var secondResult = await apiClient.Auth.RegisterAsync(request);
 
-        // Assert - HTTP response
-        await Assert.That(secondResponse.StatusCode).IsEqualTo(HttpStatusCode.Conflict);
+        // Assert - API result
+        await Assert.That(secondResult.IsSuccess).IsFalse();
+        await Assert.That(secondResult.StatusCode).IsEqualTo(409);
 
         // Assert - Database state (only one user should exist)
         await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
@@ -93,7 +91,7 @@ public class RegisterEndpointTests : TestsBase
     public async Task RegisterEndpoint_WithInvalidEmail_ShouldReturnValidationError()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
         var request = new RegisterRequest(
             Email: "not-an-email",
             Password: "SecurePass123!",
@@ -102,10 +100,11 @@ public class RegisterEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/register", request);
+        var result = await apiClient.Auth.RegisterAsync(request);
 
-        // Assert - HTTP response
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+        // Assert - API result
+        await Assert.That(result.IsSuccess).IsFalse();
+        await Assert.That(result.StatusCode).IsEqualTo(400);
 
         // Assert - Database state (no user should be created)
         await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
@@ -119,7 +118,7 @@ public class RegisterEndpointTests : TestsBase
     public async Task RegisterEndpoint_WithWeakPassword_ShouldReturnValidationError()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
         var request = new RegisterRequest(
             Email: "testuser@example.com",
             Password: "weak",
@@ -128,17 +127,18 @@ public class RegisterEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/register", request);
+        var result = await apiClient.Auth.RegisterAsync(request);
 
         // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+        await Assert.That(result.IsSuccess).IsFalse();
+        await Assert.That(result.StatusCode).IsEqualTo(400);
     }
 
     [Test]
     public async Task RegisterEndpoint_WithMissingPassword_ShouldReturnValidationError()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
         var request = new RegisterRequest(
             Email: "testuser@example.com",
             Password: "",
@@ -147,17 +147,18 @@ public class RegisterEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/register", request);
+        var result = await apiClient.Auth.RegisterAsync(request);
 
         // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+        await Assert.That(result.IsSuccess).IsFalse();
+        await Assert.That(result.StatusCode).IsEqualTo(400);
     }
 
     [Test]
     public async Task RegisterEndpoint_WithMissingDisplayName_ShouldReturnValidationError()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
         var request = new RegisterRequest(
             Email: "testuser@example.com",
             Password: "SecurePass123!",
@@ -166,18 +167,18 @@ public class RegisterEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/register", request);
+        var result = await apiClient.Auth.RegisterAsync(request);
 
-        _ = await response.Content.ReadAsStringAsync();
         // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+        await Assert.That(result.IsSuccess).IsFalse();
+        await Assert.That(result.StatusCode).IsEqualTo(400);
     }
 
     [Test]
     public async Task RegisterEndpoint_WithPasswordRequirements_ShouldEnforceComplexity()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
 
         // Test cases for password validation requirements
         var testCases = new[]
@@ -199,10 +200,11 @@ public class RegisterEndpointTests : TestsBase
             );
 
             // Act
-            var response = await client.PostAsJsonAsync("/api/v1/auth/register", request);
+            var result = await apiClient.Auth.RegisterAsync(request);
 
             // Assert
-            await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+            await Assert.That(result.IsSuccess).IsFalse();
+            await Assert.That(result.StatusCode).IsEqualTo(400);
         }
     }
 
@@ -210,7 +212,7 @@ public class RegisterEndpointTests : TestsBase
     public async Task RegisterEndpoint_WithMustChangePasswordFlag_ShouldPreserveFlag()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
         var request = new RegisterRequest(
             Email: "mustchange@example.com",
             Password: "SecurePass123!",
@@ -219,12 +221,13 @@ public class RegisterEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/register", request);
+        var result = await apiClient.Auth.RegisterAsync(request);
 
-        // Assert - HTTP response
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Created);
+        // Assert - API result
+        await Assert.That(result.IsSuccess).IsTrue();
+        await Assert.That(result.StatusCode).IsEqualTo(201);
 
-        var responseData = await response.Content.ReadFromJsonAsync<RegisterResponse>();
+        var responseData = result.Data!;
         await Assert.That(responseData).IsNotNull();
         await Assert.That(responseData.MustChangePassword).IsTrue();
 

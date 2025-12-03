@@ -1,12 +1,9 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RSSVibe.Contracts.Auth;
 using RSSVibe.Data;
 using RSSVibe.Data.Entities;
-using System.Net;
-using System.Net.Http.Json;
 
 namespace RSSVibe.ApiService.Tests.Endpoints.Auth;
 
@@ -20,7 +17,7 @@ public class LoginEndpointTests : TestsBase
     public async Task LoginEndpoint_WithValidCredentials_ShouldReturn200WithTokens()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
 
         // First register a user
         var registerRequest = new RegisterRequest(
@@ -29,7 +26,7 @@ public class LoginEndpointTests : TestsBase
             DisplayName: "Login Test User",
             MustChangePassword: false
         );
-        await client.PostAsJsonAsync("/api/v1/auth/register", registerRequest);
+        await apiClient.Auth.RegisterAsync(registerRequest);
 
         // Now login
         var loginRequest = new LoginRequest(
@@ -39,12 +36,13 @@ public class LoginEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/login", loginRequest);
+        var result = await apiClient.Auth.LoginAsync(loginRequest);
 
-        // Assert - HTTP response
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        // Assert - API result
+        await Assert.That(result.IsSuccess).IsTrue();
+        await Assert.That(result.StatusCode).IsEqualTo(200);
 
-        var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
+        var loginResponse = result.Data!;
         await Assert.That(loginResponse).IsNotNull();
         await Assert.That(loginResponse.AccessToken).IsNotEmpty();
         await Assert.That(loginResponse.RefreshToken).IsNotEmpty();
@@ -68,7 +66,7 @@ public class LoginEndpointTests : TestsBase
     public async Task LoginEndpoint_WithInvalidEmail_ShouldReturn400()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
         var loginRequest = new LoginRequest(
             Email: "invalid-email",
             Password: "ValidPassword123!",
@@ -76,17 +74,18 @@ public class LoginEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/login", loginRequest);
+        var result = await apiClient.Auth.LoginAsync(loginRequest);
 
         // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+        await Assert.That(result.IsSuccess).IsFalse();
+        await Assert.That(result.StatusCode).IsEqualTo(400);
     }
 
     [Test]
     public async Task LoginEndpoint_WithMissingPassword_ShouldReturn400()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
         var loginRequest = new LoginRequest(
             Email: "test@rssvibe.local",
             Password: "",
@@ -94,17 +93,18 @@ public class LoginEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/login", loginRequest);
+        var result = await apiClient.Auth.LoginAsync(loginRequest);
 
         // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+        await Assert.That(result.IsSuccess).IsFalse();
+        await Assert.That(result.StatusCode).IsEqualTo(400);
     }
 
     [Test]
     public async Task LoginEndpoint_WithNonExistentUser_ShouldReturn401()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
         var loginRequest = new LoginRequest(
             Email: "nonexistent@rssvibe.local",
             Password: "ValidPassword123!",
@@ -112,21 +112,19 @@ public class LoginEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/login", loginRequest);
+        var result = await apiClient.Auth.LoginAsync(loginRequest);
 
         // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
-
-        var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
-        await Assert.That(problemDetails).IsNotNull();
-        await Assert.That(problemDetails.Detail).Contains("Invalid email or password");
+        await Assert.That(result.IsSuccess).IsFalse();
+        await Assert.That(result.StatusCode).IsEqualTo(401);
+        await Assert.That(result.ErrorDetail).Contains("Invalid email or password");
     }
 
     [Test]
     public async Task LoginEndpoint_WithWrongPassword_ShouldReturn401()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
 
         // Register user
         var registerRequest = new RegisterRequest(
@@ -135,7 +133,7 @@ public class LoginEndpointTests : TestsBase
             DisplayName: "Wrong Pass Test User",
             MustChangePassword: false
         );
-        await client.PostAsJsonAsync("/api/v1/auth/register", registerRequest);
+        await apiClient.Auth.RegisterAsync(registerRequest);
 
         // Try to login with wrong password
         var loginRequest = new LoginRequest(
@@ -145,14 +143,12 @@ public class LoginEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/login", loginRequest);
+        var result = await apiClient.Auth.LoginAsync(loginRequest);
 
-        // Assert - HTTP response
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
-
-        var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
-        await Assert.That(problemDetails).IsNotNull();
-        await Assert.That(problemDetails.Detail).Contains("Invalid email or password");
+        // Assert - API result
+        await Assert.That(result.IsSuccess).IsFalse();
+        await Assert.That(result.StatusCode).IsEqualTo(401);
+        await Assert.That(result.ErrorDetail).Contains("Invalid email or password");
 
         // Assert - Database state (AccessFailedCount should increment)
         await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
@@ -167,7 +163,7 @@ public class LoginEndpointTests : TestsBase
     public async Task LoginEndpoint_WithLockedAccount_ShouldReturn423()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
 
         // Register user
         var registerRequest = new RegisterRequest(
@@ -176,7 +172,7 @@ public class LoginEndpointTests : TestsBase
             DisplayName: "Locked Test User",
             MustChangePassword: false
         );
-        await client.PostAsJsonAsync("/api/v1/auth/register", registerRequest);
+        await apiClient.Auth.RegisterAsync(registerRequest);
 
         // Make 5 failed login attempts to trigger lockout
         var wrongLoginRequest = new LoginRequest(
@@ -187,7 +183,7 @@ public class LoginEndpointTests : TestsBase
 
         for (var i = 0; i < 5; i++)
         {
-            await client.PostAsJsonAsync("/api/v1/auth/login", wrongLoginRequest);
+            await apiClient.Auth.LoginAsync(wrongLoginRequest);
         }
 
         // Now try with correct password (should be locked)
@@ -198,14 +194,12 @@ public class LoginEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/login", correctLoginRequest);
+        var result = await apiClient.Auth.LoginAsync(correctLoginRequest);
 
-        // Assert - HTTP response
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Locked);
-
-        var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
-        await Assert.That(problemDetails).IsNotNull();
-        await Assert.That(problemDetails.Detail).Contains("locked");
+        // Assert - API result
+        await Assert.That(result.IsSuccess).IsFalse();
+        await Assert.That(result.StatusCode).IsEqualTo(423);
+        await Assert.That(result.ErrorDetail).Contains("locked");
 
         // Assert - Database state (user should be locked)
         await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
@@ -221,7 +215,7 @@ public class LoginEndpointTests : TestsBase
     public async Task LoginEndpoint_WithMustChangePassword_ShouldReturnTrueFlag()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
 
         // Register user with mustChangePassword flag
         var registerRequest = new RegisterRequest(
@@ -230,7 +224,7 @@ public class LoginEndpointTests : TestsBase
             DisplayName: "Must Change Test User",
             MustChangePassword: true
         );
-        await client.PostAsJsonAsync("/api/v1/auth/register", registerRequest);
+        await apiClient.Auth.RegisterAsync(registerRequest);
 
         // Login
         var loginRequest = new LoginRequest(
@@ -240,12 +234,13 @@ public class LoginEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/login", loginRequest);
+        var result = await apiClient.Auth.LoginAsync(loginRequest);
 
         // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        await Assert.That(result.IsSuccess).IsTrue();
+        await Assert.That(result.StatusCode).IsEqualTo(200);
 
-        var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
+        var loginResponse = result.Data!;
         await Assert.That(loginResponse).IsNotNull();
         await Assert.That(loginResponse.MustChangePassword).IsEqualTo(true);
     }
@@ -254,7 +249,7 @@ public class LoginEndpointTests : TestsBase
     public async Task LoginEndpoint_WithRememberMe_ShouldCreateRefreshToken()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
 
         // Register user
         var registerRequest = new RegisterRequest(
@@ -263,7 +258,7 @@ public class LoginEndpointTests : TestsBase
             DisplayName: "Remember Me Test User",
             MustChangePassword: false
         );
-        await client.PostAsJsonAsync("/api/v1/auth/register", registerRequest);
+        await apiClient.Auth.RegisterAsync(registerRequest);
 
         // Login with rememberMe = true
         var loginRequest = new LoginRequest(
@@ -273,12 +268,13 @@ public class LoginEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/login", loginRequest);
+        var result = await apiClient.Auth.LoginAsync(loginRequest);
 
-        // Assert - HTTP response
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        // Assert - API result
+        await Assert.That(result.IsSuccess).IsTrue();
+        await Assert.That(result.StatusCode).IsEqualTo(200);
 
-        var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
+        var loginResponse = result.Data!;
         await Assert.That(loginResponse).IsNotNull();
         await Assert.That(loginResponse.RefreshToken).IsNotEmpty();
 
@@ -298,7 +294,7 @@ public class LoginEndpointTests : TestsBase
     public async Task LoginEndpoint_SuccessfulLogin_ShouldResetFailureCount()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
 
         // Register user
         var registerRequest = new RegisterRequest(
@@ -307,7 +303,7 @@ public class LoginEndpointTests : TestsBase
             DisplayName: "Reset Failure Test User",
             MustChangePassword: false
         );
-        await client.PostAsJsonAsync("/api/v1/auth/register", registerRequest);
+        await apiClient.Auth.RegisterAsync(registerRequest);
 
         // Make 3 failed login attempts
         var wrongLoginRequest = new LoginRequest(
@@ -318,7 +314,7 @@ public class LoginEndpointTests : TestsBase
 
         for (var i = 0; i < 3; i++)
         {
-            await client.PostAsJsonAsync("/api/v1/auth/login", wrongLoginRequest);
+            await apiClient.Auth.LoginAsync(wrongLoginRequest);
         }
 
         // Now login with correct password
@@ -328,8 +324,9 @@ public class LoginEndpointTests : TestsBase
             RememberMe: false
         );
 
-        var successResponse = await client.PostAsJsonAsync("/api/v1/auth/login", correctLoginRequest);
-        await Assert.That(successResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var successResult = await apiClient.Auth.LoginAsync(correctLoginRequest);
+        await Assert.That(successResult.IsSuccess).IsTrue();
+        await Assert.That(successResult.StatusCode).IsEqualTo(200);
 
         // Assert - Database state (AccessFailedCount should be reset to 0)
         await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
@@ -342,9 +339,9 @@ public class LoginEndpointTests : TestsBase
         // Make 3 more failed attempts - should NOT be locked yet (failure count was reset)
         for (var i = 0; i < 3; i++)
         {
-            var response = await client.PostAsJsonAsync("/api/v1/auth/login", wrongLoginRequest);
+            var result = await apiClient.Auth.LoginAsync(wrongLoginRequest);
             // Should still return 401, not 423 (locked)
-            await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
+            await Assert.That(result.StatusCode).IsEqualTo(401);
         }
     }
 
@@ -352,7 +349,7 @@ public class LoginEndpointTests : TestsBase
     public async Task LoginEndpoint_WithoutRememberMe_ShouldCreateRefreshToken()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
 
         // Register user
         var registerRequest = new RegisterRequest(
@@ -361,7 +358,7 @@ public class LoginEndpointTests : TestsBase
             DisplayName: "No Remember Test User",
             MustChangePassword: false
         );
-        await client.PostAsJsonAsync("/api/v1/auth/register", registerRequest);
+        await apiClient.Auth.RegisterAsync(registerRequest);
 
         // Login with rememberMe = false
         var loginRequest = new LoginRequest(
@@ -371,12 +368,13 @@ public class LoginEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/login", loginRequest);
+        var result = await apiClient.Auth.LoginAsync(loginRequest);
 
-        // Assert - HTTP response
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        // Assert - API result
+        await Assert.That(result.IsSuccess).IsTrue();
+        await Assert.That(result.StatusCode).IsEqualTo(200);
 
-        var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
+        var loginResponse = result.Data!;
         await Assert.That(loginResponse).IsNotNull();
         await Assert.That(loginResponse.RefreshToken).IsNotEmpty();
 

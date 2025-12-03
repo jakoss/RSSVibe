@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RSSVibe.ApiService.Tests.Infrastructure;
@@ -81,7 +80,7 @@ public class ChangePasswordEndpointTests : TestsBase
     public async Task ChangePasswordEndpoint_WithInvalidCurrentPassword_ShouldReturn401()
     {
         // Arrange - Create authenticated client
-        var client = CreateAuthenticatedClient();
+        var apiClient = CreateAuthenticatedApiClient();
 
         var request = new ChangePasswordRequest(
             CurrentPassword: "WrongPassword123!",
@@ -89,22 +88,21 @@ public class ChangePasswordEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/change-password", request);
+        var result = await apiClient.Auth.ChangePasswordAsync(request);
 
         // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
+        await Assert.That(result.IsSuccess).IsFalse();
+        await Assert.That(result.StatusCode).IsEqualTo((int)HttpStatusCode.Unauthorized);
 
-        var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
-        await Assert.That(problemDetails).IsNotNull();
-        await Assert.That(problemDetails.Title).IsEqualTo("Authentication failed");
-        await Assert.That(problemDetails.Detail).IsEqualTo("Current password is incorrect.");
+        await Assert.That(result.ErrorTitle).IsEqualTo("Authentication failed");
+        await Assert.That(result.ErrorDetail).IsEqualTo("Current password is incorrect.");
     }
 
     [Test]
     public async Task ChangePasswordEndpoint_WithWeakNewPassword_ShouldReturn400()
     {
         // Arrange - Create authenticated client
-        var client = CreateAuthenticatedClient();
+        var apiClient = CreateAuthenticatedApiClient();
 
         var request = new ChangePasswordRequest(
             CurrentPassword: TestApplication.TestUserPassword,
@@ -112,17 +110,18 @@ public class ChangePasswordEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/change-password", request);
+        var result = await apiClient.Auth.ChangePasswordAsync(request);
 
         // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+        await Assert.That(result.IsSuccess).IsFalse();
+        await Assert.That(result.StatusCode).IsEqualTo((int)HttpStatusCode.BadRequest);
     }
 
     [Test]
     public async Task ChangePasswordEndpoint_WithNewPasswordSameAsCurrent_ShouldReturn400()
     {
         // Arrange - Create authenticated client
-        var client = CreateAuthenticatedClient();
+        var apiClient = CreateAuthenticatedApiClient();
 
         var request = new ChangePasswordRequest(
             CurrentPassword: TestApplication.TestUserPassword,
@@ -130,17 +129,18 @@ public class ChangePasswordEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/change-password", request);
+        var result = await apiClient.Auth.ChangePasswordAsync(request);
 
         // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+        await Assert.That(result.IsSuccess).IsFalse();
+        await Assert.That(result.StatusCode).IsEqualTo((int)HttpStatusCode.BadRequest);
     }
 
     [Test]
     public async Task ChangePasswordEndpoint_WithoutAuthentication_ShouldReturn401()
     {
         // Arrange - Use unauthenticated client
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
 
         var request = new ChangePasswordRequest(
             CurrentPassword: "SomePassword123!",
@@ -148,10 +148,11 @@ public class ChangePasswordEndpointTests : TestsBase
         );
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/change-password", request);
+        var result = await apiClient.Auth.ChangePasswordAsync(request);
 
         // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
+        await Assert.That(result.IsSuccess).IsFalse();
+        await Assert.That(result.StatusCode).IsEqualTo((int)HttpStatusCode.Unauthorized);
     }
 
     [Test]

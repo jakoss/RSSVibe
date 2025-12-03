@@ -20,7 +20,7 @@ public class RefreshEndpointTests : TestsBase
     public async Task RefreshEndpoint_WithValidToken_ShouldReturn200WithNewTokens()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
 
         // Register and login to get initial tokens
         var registerRequest = new RegisterRequest(
@@ -29,45 +29,30 @@ public class RefreshEndpointTests : TestsBase
             DisplayName: "Refresh Valid User",
             MustChangePassword: false
         );
-        await client.PostAsJsonAsync("/api/v1/auth/register", registerRequest);
+        var registerResult = await apiClient.Auth.RegisterAsync(registerRequest);
+        await Assert.That(registerResult.IsSuccess).IsTrue();
 
         var loginRequest = new LoginRequest(
             Email: "refresh_valid@rssvibe.local",
             Password: "ValidPassword123!",
             RememberMe: true
         );
-        var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", loginRequest);
+        var loginResult = await apiClient.Auth.LoginAsync(loginRequest);
+        await Assert.That(loginResult.IsSuccess).IsTrue();
+        await Assert.That(loginResult.StatusCode).IsEqualTo((int)HttpStatusCode.OK);
 
-        // DEBUG: Check if login succeeded
-        if (loginResponse.StatusCode != HttpStatusCode.OK)
-        {
-            var loginContent = await loginResponse.Content.ReadAsStringAsync();
-            Console.WriteLine($"Login Status: {loginResponse.StatusCode}");
-            Console.WriteLine($"Login Content: {loginContent}");
-        }
-        await Assert.That(loginResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
-
-        var login = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
-
-        await Assert.That(login).IsNotNull();
+        var login = loginResult.Data!;
 
         var refreshRequest = new RefreshTokenRequest(login.RefreshToken);
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/refresh", refreshRequest);
+        var result = await apiClient.Auth.RefreshAsync(refreshRequest);
 
-        // DEBUG: Print response content if not OK
-        if (response.StatusCode != HttpStatusCode.OK)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Response Status: {response.StatusCode}");
-            Console.WriteLine($"Response Content: {content}");
-        }
+        // Assert
+        await Assert.That(result.IsSuccess).IsTrue();
+        await Assert.That(result.StatusCode).IsEqualTo((int)HttpStatusCode.OK);
 
-        // Assert - HTTP response
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-
-        var refreshResponse = await response.Content.ReadFromJsonAsync<RefreshTokenResponse>();
+        var refreshResponse = result.Data!;
         await Assert.That(refreshResponse).IsNotNull();
         await Assert.That(refreshResponse.AccessToken).IsNotEmpty();
         await Assert.That(refreshResponse.RefreshToken).IsNotEmpty();
@@ -199,7 +184,7 @@ public class RefreshEndpointTests : TestsBase
     public async Task RefreshEndpoint_WithUsedToken_ShouldReturn409AndRevokeAllTokens()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
 
         // Register and login to get initial tokens
         var registerRequest = new RegisterRequest(
@@ -208,33 +193,35 @@ public class RefreshEndpointTests : TestsBase
             DisplayName: "Refresh Replay User",
             MustChangePassword: false
         );
-        await client.PostAsJsonAsync("/api/v1/auth/register", registerRequest);
+        var registerResult = await apiClient.Auth.RegisterAsync(registerRequest);
+        await Assert.That(registerResult.IsSuccess).IsTrue();
 
         var loginRequest = new LoginRequest(
             Email: "refresh_replay@rssvibe.local",
             Password: "ValidPassword123!",
             RememberMe: true
         );
-        var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", loginRequest);
-        var login = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+        var loginResult = await apiClient.Auth.LoginAsync(loginRequest);
+        await Assert.That(loginResult.IsSuccess).IsTrue();
 
-        await Assert.That(login).IsNotNull();
+        var login = loginResult.Data!;
         var refreshRequest = new RefreshTokenRequest(login.RefreshToken);
 
         // Use the token once (successfully)
-        var firstResponse = await client.PostAsJsonAsync("/api/v1/auth/refresh", refreshRequest);
-        await Assert.That(firstResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var firstResult = await apiClient.Auth.RefreshAsync(refreshRequest);
+        await Assert.That(firstResult.IsSuccess).IsTrue();
+        await Assert.That(firstResult.StatusCode).IsEqualTo((int)HttpStatusCode.OK);
 
         // Act - Try to use the same token again (replay attack)
-        var replayResponse = await client.PostAsJsonAsync("/api/v1/auth/refresh", refreshRequest);
+        var replayResult = await apiClient.Auth.RefreshAsync(refreshRequest);
 
         // Assert - HTTP response
-        await Assert.That(replayResponse.StatusCode).IsEqualTo(HttpStatusCode.Conflict);
+        await Assert.That(replayResult.IsSuccess).IsFalse();
+        await Assert.That(replayResult.StatusCode).IsEqualTo((int)HttpStatusCode.Conflict);
 
-        var problemDetails = await replayResponse.Content.ReadFromJsonAsync<ProblemDetails>();
-        await Assert.That(problemDetails).IsNotNull();
-        await Assert.That(problemDetails.Detail).Contains("already been used");
-        await Assert.That(problemDetails.Detail).Contains("revoked");
+        await Assert.That(replayResult.ErrorDetail).IsNotNull();
+        await Assert.That(replayResult.ErrorDetail).Contains("already been used");
+        await Assert.That(replayResult.ErrorDetail).Contains("revoked");
 
         // Assert - Database state (all user tokens should be revoked)
         await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
@@ -275,7 +262,7 @@ public class RefreshEndpointTests : TestsBase
     public async Task RefreshEndpoint_PreservesMustChangePasswordFlag()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
 
         // Register user with MustChangePassword = true
         var registerRequest = new RegisterRequest(
@@ -284,28 +271,30 @@ public class RefreshEndpointTests : TestsBase
             DisplayName: "Refresh MustChange User",
             MustChangePassword: true
         );
-        await client.PostAsJsonAsync("/api/v1/auth/register", registerRequest);
+        var registerResult = await apiClient.Auth.RegisterAsync(registerRequest);
+        await Assert.That(registerResult.IsSuccess).IsTrue();
 
         var loginRequest = new LoginRequest(
             Email: "refresh_mustchange@rssvibe.local",
             Password: "TemporaryPassword123!",
             RememberMe: true
         );
-        var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", loginRequest);
-        var login = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+        var loginResult = await apiClient.Auth.LoginAsync(loginRequest);
+        await Assert.That(loginResult.IsSuccess).IsTrue();
 
-        await Assert.That(login).IsNotNull();
+        var login = loginResult.Data!;
         await Assert.That(login.MustChangePassword).IsEqualTo(true);
 
         var refreshRequest = new RefreshTokenRequest(login.RefreshToken);
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/auth/refresh", refreshRequest);
+        var result = await apiClient.Auth.RefreshAsync(refreshRequest);
 
         // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        await Assert.That(result.IsSuccess).IsTrue();
+        await Assert.That(result.StatusCode).IsEqualTo((int)HttpStatusCode.OK);
 
-        var refreshResponse = await response.Content.ReadFromJsonAsync<RefreshTokenResponse>();
+        var refreshResponse = result.Data!;
         await Assert.That(refreshResponse).IsNotNull();
         await Assert.That(refreshResponse.MustChangePassword).IsEqualTo(true);
     }
@@ -314,7 +303,7 @@ public class RefreshEndpointTests : TestsBase
     public async Task RefreshEndpoint_VerifiesSlidingExpiration()
     {
         // Arrange
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
 
         // Register and login to get initial tokens
         var registerRequest = new RegisterRequest(
@@ -323,16 +312,18 @@ public class RefreshEndpointTests : TestsBase
             DisplayName: "Refresh Sliding User",
             MustChangePassword: false
         );
-        await client.PostAsJsonAsync("/api/v1/auth/register", registerRequest);
+        var registerResult = await apiClient.Auth.RegisterAsync(registerRequest);
+        await Assert.That(registerResult.IsSuccess).IsTrue();
 
         var loginRequest = new LoginRequest(
             Email: "refresh_sliding@rssvibe.local",
             Password: "ValidPassword123!",
             RememberMe: true
         );
-        var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", loginRequest);
-        var login = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
-        await Assert.That(login).IsNotNull();
+        var loginResult = await apiClient.Auth.LoginAsync(loginRequest);
+        await Assert.That(loginResult.IsSuccess).IsTrue();
+
+        var login = loginResult.Data!;
 
         // Check original token expiration
         await using var scope1 = WebApplicationFactory.Services.CreateAsyncScope();
@@ -346,12 +337,13 @@ public class RefreshEndpointTests : TestsBase
         var refreshRequest = new RefreshTokenRequest(login.RefreshToken);
 
         // Act - Refresh the token
-        var response = await client.PostAsJsonAsync("/api/v1/auth/refresh", refreshRequest);
+        var result = await apiClient.Auth.RefreshAsync(refreshRequest);
 
         // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        await Assert.That(result.IsSuccess).IsTrue();
+        await Assert.That(result.StatusCode).IsEqualTo((int)HttpStatusCode.OK);
 
-        var refreshResponse = await response.Content.ReadFromJsonAsync<RefreshTokenResponse>();
+        var refreshResponse = result.Data!;
         await Assert.That(refreshResponse).IsNotNull();
 
         // Check new token expiration (should have same lifetime as original)

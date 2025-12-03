@@ -19,15 +19,16 @@ public class ProfileEndpointTests : TestsBase
     public async Task ProfileEndpoint_WithValidToken_ShouldReturnUserProfile()
     {
         // Arrange
-        var client = CreateAuthenticatedClient();
+        var apiClient = CreateAuthenticatedApiClient();
 
         // Act
-        var response = await client.GetAsync("/api/v1/auth/profile");
+        var result = await apiClient.Auth.GetProfileAsync();
 
-        // Assert - HTTP response
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        // Assert
+        await Assert.That(result.IsSuccess).IsTrue();
+        await Assert.That(result.StatusCode).IsEqualTo((int)HttpStatusCode.OK);
 
-        var profileData = await response.Content.ReadFromJsonAsync<ProfileResponse>();
+        var profileData = result.Data!;
         await Assert.That(profileData).IsNotNull();
         await Assert.That(profileData.Email).IsEqualTo(Infrastructure.TestApplication.TestUserEmail);
         await Assert.That(profileData.DisplayName).IsEqualTo(Infrastructure.TestApplication.TestUserDisplayName);
@@ -41,13 +42,14 @@ public class ProfileEndpointTests : TestsBase
     public async Task ProfileEndpoint_WithoutToken_ShouldReturnUnauthorized()
     {
         // Arrange - Create unauthenticated client
-        var client = WebApplicationFactory.CreateClient();
+        var apiClient = CreateApiClient();
 
         // Act
-        var response = await client.GetAsync("/api/v1/auth/profile");
+        var result = await apiClient.Auth.GetProfileAsync();
 
         // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
+        await Assert.That(result.IsSuccess).IsFalse();
+        await Assert.That(result.StatusCode).IsEqualTo((int)HttpStatusCode.Unauthorized);
     }
 
     [Test]
@@ -170,7 +172,7 @@ public class ProfileEndpointTests : TestsBase
 
         var profileData = await response.Content.ReadFromJsonAsync<ProfileResponse>();
         await Assert.That(profileData).IsNotNull();
-        await Assert.That(profileData.Roles).IsNotNull();
+        await Assert.That(profileData!.Roles).IsNotNull();
         await Assert.That(profileData.Roles.Count).IsEqualTo(2);
         await Assert.That(profileData.Roles).Contains(adminRole);
         await Assert.That(profileData.Roles).Contains(moderatorRole);
@@ -211,7 +213,7 @@ public class ProfileEndpointTests : TestsBase
 
         var profileData = await response.Content.ReadFromJsonAsync<ProfileResponse>();
         await Assert.That(profileData).IsNotNull();
-        await Assert.That(profileData.MustChangePassword).IsTrue();
+        await Assert.That(profileData!.MustChangePassword).IsTrue();
     }
 
     [Test]
@@ -229,7 +231,7 @@ public class ProfileEndpointTests : TestsBase
 
         var profileData = await response.Content.ReadFromJsonAsync<ProfileResponse>();
         await Assert.That(profileData).IsNotNull();
-        await Assert.That(profileData.CreatedAt).IsNotEqualTo(default);
+        await Assert.That(profileData!.CreatedAt).IsNotEqualTo(default);
 
         // CreatedAt should be before the request (user was created during test setup)
         await Assert.That(profileData.CreatedAt).IsLessThanOrEqualTo(beforeRequest);
