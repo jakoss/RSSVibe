@@ -14,21 +14,19 @@ public static class RegisterEndpoint
     /// <summary>
     /// Maps the POST /auth/register endpoint to the handler within an auth group.
     /// </summary>
-    public static RouteGroupBuilder MapRegisterEndpoint(
-        this RouteGroupBuilder group)
-    {
-        group.MapPost("/register", HandleAsync)
-            .WithName("Register")
-            .AddOpenApiOperationTransformer((operation, _, _) =>
-            {
-                operation.Summary = "Register a new user account";
-                operation.Description = "Creates a new user account using email and password. " +
-                                       "Disabled in production when root user provisioning is enabled.";
-                return Task.CompletedTask;
-            });
+     public static RouteGroupBuilder MapRegisterEndpoint(
+         this RouteGroupBuilder group)
+     {
+         group.MapPost("/register", HandleAsync)
+             .WithName("Register")
+             .WithSummary("Register a new user account")
+             .WithDescription("""
+                 Creates a new user account using email and password. 
+                 Disabled in production when root user provisioning is enabled.
+                 """);
 
-        return group;
-    }
+         return group;
+     }
 
     /// <summary>
     /// Handles the registration request with comprehensive validation and error handling.

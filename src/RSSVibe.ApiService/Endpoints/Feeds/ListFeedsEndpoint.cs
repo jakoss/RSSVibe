@@ -14,15 +14,20 @@ public static class ListFeedsEndpoint
     /// <summary>
     /// Maps the list feeds endpoint to the route group.
     /// </summary>
-    public static RouteGroupBuilder MapListFeedsEndpoint(this RouteGroupBuilder group)
-    {
-        group.MapGet("", HandleAsync)
-            .WithName("ListFeeds")
-            .WithSummary("List feeds")
-            .WithDescription("Retrieves a paginated list of feeds owned by the authenticated user with optional filtering and sorting.");
+     public static RouteGroupBuilder MapListFeedsEndpoint(this RouteGroupBuilder group)
+     {
+         group.MapGet("", HandleAsync)
+             .WithName("ListFeeds")
+             .WithSummary("List feeds")
+             .WithDescription("Retrieves a paginated list of feeds owned by the authenticated user with optional filtering and sorting.")
+             .Produces<ListFeedsResponse>()
+             .ProducesProblem(StatusCodes.Status400BadRequest)
+             .ProducesProblem(StatusCodes.Status401Unauthorized)
+             .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
+             .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
-        return group;
-    }
+         return group;
+     }
 
     /// <summary>
     /// Handles the list feeds request.

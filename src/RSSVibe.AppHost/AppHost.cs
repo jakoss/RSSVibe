@@ -1,7 +1,10 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 var postgresServer = builder.AddPostgres("postgres")
-    .WithDataVolume("rssvibe-postgres-data")
+    .WithContainerName("rssvibe-postgres")
+    // .WithDataVolume()
+    // We need to have custom volume for until aspire supports postgres 18: https://github.com/dotnet/aspire/issues/11710
+    .WithVolume("rssvibe-postgres-data", "/var/lib/postgresql/18/docker")
     .WithImageTag("18")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithDbGate(configureContainer: resourceBuilder =>

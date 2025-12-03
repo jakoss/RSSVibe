@@ -9,24 +9,20 @@ namespace RSSVibe.ApiService.Endpoints.FeedAnalyses;
 
 public static class GetFeedAnalysisEndpoint
 {
-    public static RouteGroupBuilder MapGetFeedAnalysisEndpoint(this RouteGroupBuilder group)
-    {
-        group.MapGet("/{analysisId:guid}", HandleAsync)
-            .WithName("GetFeedAnalysis")
-            .AddOpenApiOperationTransformer((operation, _, _) =>
-            {
-                operation.Summary = "Get feed analysis details";
-                operation.Description = "Retrieves the complete analysis payload including selectors, preflight checks, and warnings.";
-                return Task.CompletedTask;
-            })
-            .RequireAuthorization()
-            .Produces<FeedAnalysisDetailResponse>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status403Forbidden)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+     public static RouteGroupBuilder MapGetFeedAnalysisEndpoint(this RouteGroupBuilder group)
+     {
+         group.MapGet("/{analysisId:guid}", HandleAsync)
+             .WithName("GetFeedAnalysis")
+             .WithSummary("Get feed analysis details")
+             .WithDescription("Retrieves the complete analysis payload including selectors, preflight checks, and warnings.")
+             .RequireAuthorization()
+             .Produces<FeedAnalysisDetailResponse>()
+             .ProducesProblem(StatusCodes.Status401Unauthorized)
+             .ProducesProblem(StatusCodes.Status403Forbidden)
+             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        return group;
-    }
+         return group;
+     }
 
     private static async Task<Results<Ok<FeedAnalysisDetailResponse>, UnauthorizedHttpResult, ForbidHttpResult, NotFound>>
         HandleAsync(

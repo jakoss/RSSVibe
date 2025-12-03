@@ -93,7 +93,11 @@ public static class RegisterEndpoint
     {
         group.MapPost("/register", HandleAsync)
             .WithName("Register")
-            .WithOpenApi(...);
+            .WithSummary("Register a new user account")
+            .WithDescription("""
+                Creates a new user account using email and password.
+                Disabled in production when root user provisioning is enabled.
+                """);
 
         return group;
     }
@@ -118,6 +122,57 @@ public static class RegisterEndpoint
 - Individual endpoint methods MUST accept `RouteGroupBuilder` parameter (not `IEndpointRouteBuilder`)
 - Individual endpoint methods MUST return `RouteGroupBuilder` for method chaining
 - Groups MUST be registered in parent group, starting from root `ApiGroup`
+
+---
+
+## Endpoint Documentation
+
+**MUST use `WithSummary()` and `WithDescription()` for all endpoints** to generate comprehensive OpenAPI documentation.
+
+**Pattern**:
+```csharp
+group.MapPost("/register", HandleAsync)
+    .WithName("Register")
+    .WithSummary("Register a new user account")
+    .WithDescription("""
+        Creates a new user account using email and password.
+        Disabled in production when root user provisioning is enabled.
+        """)
+    .Produces<RegisterResponse>()
+    .ProducesProblem(StatusCodes.Status409Conflict)
+    .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+```
+
+**Guidelines**:
+- `WithName()` - Unique operation name for API documentation (PascalCase, e.g., "Register", "LoginUser")
+- `WithSummary()` - Short, concise summary (1 sentence max, 50-60 characters)
+- `WithDescription()` - Detailed explanation of what the endpoint does, parameters, and behavior
+- `Produces<T>()` - Success response type (use generically typed method for better OpenAPI docs)
+- `ProducesProblem()` - Expected error responses and their status codes
+
+**Why not AddOpenApiOperationTransformer?**
+- `WithSummary()` and `WithDescription()` are the modern, built-in ASP.NET Core approach
+- More concise and declarative than manual operation transformation
+- Better IntelliSense support and method chaining
+- Produces identical OpenAPI documentation
+- Eliminates unnecessary lambda functions and Task.CompletedTask boilerplate
+
+**Example with multiple error responses**:
+```csharp
+group.MapPost("/login", HandleAsync)
+    .WithName("Login")
+    .WithSummary("Authenticate user credentials")
+    .WithDescription("""
+        Authenticates user with email and password.
+        Returns JWT access token and refresh token for subsequent API calls.
+        Supports 'remember me' to extend refresh token lifetime to 30 days.
+        """)
+    .Produces<LoginResponse>()
+    .ProducesProblem(StatusCodes.Status400BadRequest)
+    .ProducesProblem(StatusCodes.Status401Unauthorized)
+    .ProducesProblem(StatusCodes.Status423Locked)
+    .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+```
 
 ---
 
