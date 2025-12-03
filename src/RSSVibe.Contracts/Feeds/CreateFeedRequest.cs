@@ -1,9 +1,7 @@
-using RSSVibe.Contracts.FeedAnalyses;
-
 namespace RSSVibe.Contracts.Feeds;
 
 /// <summary>
-/// Request to approve an analysis and create a feed. Creates Feed entity from FeedAnalysis.
+/// Request to create a feed from a completed analysis.
 /// </summary>
 public sealed record CreateFeedRequest(
     Guid AnalysisId,
@@ -15,49 +13,43 @@ public sealed record CreateFeedRequest(
     FeedSelectorsDto? SelectorsOverride
 )
 {
-
     public sealed class Validator : AbstractValidator<CreateFeedRequest>
     {
         public Validator()
         {
             RuleFor(x => x.AnalysisId)
-                .NotEmpty().WithMessage("AnalysisId is required");
+                .NotEmpty()
+                .WithMessage("Analysis ID is required.");
 
             RuleFor(x => x.Title)
-                .NotEmpty().WithMessage("Title is required")
-                .MaximumLength(200).WithMessage("Title must be at most 200 characters");
+                .NotEmpty()
+                .WithMessage("Title is required.")
+                .MaximumLength(200)
+                .WithMessage("Title must not exceed 200 characters.");
 
             RuleFor(x => x.Description)
-                .MaximumLength(2000).WithMessage("Description must be at most 2000 characters");
+                .MaximumLength(2000)
+                .WithMessage("Description must not exceed 2000 characters.")
+                .When(x => x.Description is not null);
 
             RuleFor(x => x.Language)
-                .Must(x => x is null || (x.Length <= 16 && System.Text.RegularExpressions.Regex.IsMatch(x, "^[a-z]{2}(-[A-Z]{2})?$")))
-                .WithMessage("Language must be a valid ISO 639-1/2 code");
+                .MaximumLength(16)
+                .WithMessage("Language code must not exceed 16 characters.")
+                .Matches(@"^[a-z]{2,3}(-[A-Z]{2})?$")
+                .WithMessage("Language must be a valid ISO 639-1/2 code (e.g., 'en', 'en-US').")
+                .When(x => x.Language is not null);
 
             RuleFor(x => x.UpdateInterval)
-                .NotNull().WithMessage("UpdateInterval is required");
-
-            RuleFor(x => x.UpdateInterval.Unit)
-                .IsInEnum()
-                .WithMessage("UpdateInterval.Unit must be Hour, Day, or Week");
-
-            RuleFor(x => x.UpdateInterval.Value)
-                .GreaterThanOrEqualTo((short)1).WithMessage("UpdateInterval.Value must be >= 1");
+                .NotNull()
+                .WithMessage("Update interval is required.")
+                .SetValidator(new UpdateIntervalDto.Validator());
 
             RuleFor(x => x.TtlMinutes)
-                .GreaterThanOrEqualTo((short)15).WithMessage("TtlMinutes must be >= 15");
+                .GreaterThanOrEqualTo((short)15)
+                .WithMessage("TTL must be at least 15 minutes.");
 
-            // SelectorsOverride is optional but if provided must have required fields
-            RuleFor(x => x.SelectorsOverride!.ItemContainer)
-                .NotEmpty().WithMessage("SelectorsOverride.ItemContainer is required if override is provided")
-                .When(x => x.SelectorsOverride is not null);
-
-            RuleFor(x => x.SelectorsOverride!.Title)
-                .NotEmpty().WithMessage("SelectorsOverride.Title is required if override is provided")
-                .When(x => x.SelectorsOverride is not null);
-
-            RuleFor(x => x.SelectorsOverride!.Link)
-                .NotEmpty().WithMessage("SelectorsOverride.Link is required if override is provided")
+            RuleFor(x => x.SelectorsOverride)
+                .SetValidator(new FeedSelectorsDto.Validator()!)
                 .When(x => x.SelectorsOverride is not null);
         }
     }

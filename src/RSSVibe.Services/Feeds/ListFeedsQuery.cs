@@ -10,7 +10,7 @@ public sealed record ListFeedsQuery(
     string SortField,
     string SortDirection,
     string? Status,
-    DateTime? NextParseBefore,
+    DateTimeOffset? NextParseBefore,
     string? Search,
     bool IncludeInactive
 );

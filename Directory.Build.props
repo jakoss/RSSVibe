@@ -1,13 +1,14 @@
 <Project>
-	<PropertyGroup>
+    <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <LangVersion>14.0</LangVersion>
-		<AccelerateBuildsInVisualStudio>True</AccelerateBuildsInVisualStudio>
-		<AnalysisMode>Recommended</AnalysisMode>
+        <AccelerateBuildsInVisualStudio>True</AccelerateBuildsInVisualStudio>
+        <AnalysisMode>Recommended</AnalysisMode>
+        <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
         <Nullable>enable</Nullable>
         <WarningsAsErrors>Nullable</WarningsAsErrors>
         <ImplicitUsings>enable</ImplicitUsings>
         <TreatWarningsAsErrors Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</TreatWarningsAsErrors>
         <Deterministic Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</Deterministic>
-	</PropertyGroup>
+    </PropertyGroup>
 </Project>

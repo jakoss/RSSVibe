@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
-using RSSVibe.Contracts;
 using RSSVibe.Contracts.Feeds;
 using RSSVibe.Services.Feeds;
 
@@ -20,8 +19,7 @@ public static class ListFeedsEndpoint
         group.MapGet("", HandleAsync)
             .WithName("ListFeeds")
             .WithSummary("List feeds")
-            .WithDescription("Retrieves a paginated list of feeds owned by the authenticated user with optional filtering and sorting.")
-            .WithOpenApi();
+            .WithDescription("Retrieves a paginated list of feeds owned by the authenticated user with optional filtering and sorting.");
 
         return group;
     }
@@ -47,10 +45,10 @@ public static class ListFeedsEndpoint
         var (sortField, sortDirection) = ParseSortParameter(request.Sort);
 
         // Parse NextParseBefore timestamp
-        DateTime? nextParseBefore = null;
+        DateTimeOffset? nextParseBefore = null;
         if (!string.IsNullOrEmpty(request.NextParseBefore))
         {
-            if (!DateTime.TryParse(request.NextParseBefore, null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsed))
+            if (!DateTimeOffset.TryParse(request.NextParseBefore, null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsed))
             {
                 return TypedResults.UnprocessableEntity();
             }

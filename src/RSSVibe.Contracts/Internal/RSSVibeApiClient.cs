@@ -1,6 +1,3 @@
-using System.Net.Http.Json;
-using System.Text.Json;
-
 namespace RSSVibe.Contracts.Internal;
 
 /// <summary>

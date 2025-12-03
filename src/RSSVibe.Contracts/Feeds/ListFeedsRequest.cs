@@ -52,7 +52,7 @@ public sealed record ListFeedsRequest(
 
         private static bool BeValidIso8601Timestamp(string timestamp)
         {
-            return DateTime.TryParse(timestamp, null, System.Globalization.DateTimeStyles.RoundtripKind, out _);
+            return DateTimeOffset.TryParse(timestamp, out _);
         }
     }
 }

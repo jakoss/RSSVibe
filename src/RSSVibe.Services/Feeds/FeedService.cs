@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RSSVibe.Data;
 using RSSVibe.Data.Entities;
-using RSSVibe.Data.Entities;
 
 namespace RSSVibe.Services.Feeds;
 
@@ -25,20 +24,28 @@ internal sealed class FeedService(RssVibeDbContext dbContext) : IFeedService
             // Apply optional filters
             if (!string.IsNullOrEmpty(query.Status))
             {
-                baseQuery = baseQuery.Where(f => f.LastParseStatus.ToString() == query.Status);
+                if (Enum.TryParse<FeedParseStatus>(query.Status, true, out var statusEnum))
+                {
+                    baseQuery = baseQuery.Where(f => f.LastParseStatus == statusEnum);
+                }
+                else
+                {
+                    // Invalid status, return no results
+                    baseQuery = baseQuery.Where(f => false);
+                }
             }
 
             if (query.NextParseBefore.HasValue)
             {
-                baseQuery = baseQuery.Where(f => f.NextParseAfter < query.NextParseBefore.Value);
+                baseQuery = baseQuery.Where(f => f.NextParseAfter.HasValue && f.NextParseAfter.Value < query.NextParseBefore.Value);
             }
 
             if (!string.IsNullOrEmpty(query.Search))
             {
-                var searchTerm = query.Search.ToLower();
+                var searchTerm = $"%{query.Search.ToLowerInvariant()}%";
                 baseQuery = baseQuery.Where(f =>
-                    f.Title.ToLower().Contains(searchTerm) ||
-                    f.SourceUrl.ToLower().Contains(searchTerm));
+                    EF.Functions.ILike(f.Title, searchTerm) ||
+                    EF.Functions.ILike(f.SourceUrl, searchTerm));
             }
 
             if (!query.IncludeInactive)
@@ -93,15 +100,15 @@ internal sealed class FeedService(RssVibeDbContext dbContext) : IFeedService
 
     private static IQueryable<Feed> ApplySorting(IQueryable<Feed> query, string sortField, string sortDirection)
     {
-        return sortField.ToLower() switch
+        return sortField.ToLowerInvariant() switch
         {
-            "createdat" => sortDirection.ToLower() == "desc"
+            "createdat" => sortDirection.Equals("desc" , StringComparison.OrdinalIgnoreCase)
                 ? query.OrderByDescending(f => f.CreatedAt)
                 : query.OrderBy(f => f.CreatedAt),
-            "lastparsedat" => sortDirection.ToLower() == "desc"
+            "lastparsedat" => sortDirection.Equals("desc" , StringComparison.OrdinalIgnoreCase)
                 ? query.OrderByDescending(f => f.LastParsedAt)
                 : query.OrderBy(f => f.LastParsedAt),
-            "title" => sortDirection.ToLower() == "desc"
+            "title" => sortDirection.Equals("desc" , StringComparison.OrdinalIgnoreCase)
                 ? query.OrderByDescending(f => f.Title)
                 : query.OrderBy(f => f.Title),
             _ => query.OrderByDescending(f => f.LastParsedAt) // Default

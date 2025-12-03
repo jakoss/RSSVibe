@@ -1,5 +1,3 @@
-using RSSVibe.Contracts;
-
 namespace RSSVibe.Contracts.FeedItems;
 
 /// <summary>
