@@ -5,6 +5,57 @@
 
 ---
 
+## Running Tests
+
+TUnit tests are executed using `dotnet run` on the test project (NOT `dotnet test` on the solution).
+
+```bash
+# Run all tests in a test project
+cd Tests/RSSVibe.ApiService.Tests
+dotnet run
+
+# Run all tests in solution (from solution root)
+dotnet test  # This works but prefer dotnet run on individual projects
+```
+
+**Filtering Tests** using `--treenode-filter`:
+
+The syntax is: `/<Assembly>/<Namespace>/<Class name>/<Test name>` with wildcard support (`*`)
+
+```bash
+# Run all tests in a specific class
+dotnet run --treenode-filter /*/*/LoginEndpointTests/*
+
+# Run all tests with specific name
+dotnet run --treenode-filter /*/*/*/RegisterEndpoint_WithValidRequest_*
+
+# Run tests by namespace
+dotnet run --treenode-filter /*/RSSVibe.ApiService.Tests.Endpoints.Auth/*/*
+
+# Run tests by custom property (e.g., Category)
+dotnet run --treenode-filter /*/*/*/*[Category=Unit]
+
+# Combine filters with AND (&)
+dotnet run --treenode-filter /*/*/*/*[Category=Integration]&[Priority=High]
+
+# Combine filters with OR (|) - requires parentheses
+dotnet run --treenode-filter "(/*/*/LoginEndpointTests/*)|(/*/*/RegisterEndpointTests/*)"
+
+# Exclude tests with != operator
+dotnet run --treenode-filter /*/*/*/*[Category!=Performance]
+```
+
+**Filter Operators**:
+- `*` - Wildcard pattern matching
+- `=` - Exact match
+- `!=` - Negation/exclusion
+- `&` - AND (combine conditions)
+- `|` - OR (requires parentheses)
+
+See [TUnit Test Filters documentation](https://tunit.dev/docs/execution/test-filters) for complete filtering syntax.
+
+---
+
 ## Test Organization
 
 - MUST name test methods: `ClassName_MethodName_ShouldBehavior`

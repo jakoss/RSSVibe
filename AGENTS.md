@@ -108,7 +108,14 @@ dotnet restore
 # Build with warnings as errors (REQUIRED before PRs)
 dotnet build -c Release -p:TreatWarningsAsErrors=true
 
-# Run tests
+# Run tests (use dotnet run on test project, not dotnet test)
+cd Tests/RSSVibe.ApiService.Tests
+dotnet run
+
+# Run tests with filter (e.g., specific test class)
+dotnet run --treenode-filter /*/*/LoginEndpointTests/*
+
+# Run all tests from solution root (alternative)
 dotnet test
 
 # Apply code style from .editorconfig
@@ -193,7 +200,8 @@ else
 | Task | Command/Pattern |
 |------|----------------|
 | Build for PR | `dotnet build -c Release -p:TreatWarningsAsErrors=true` |
-| Run tests | `dotnet test` |
+| Run tests | `cd Tests/{Project}.Tests && dotnet run` |
+| Filter tests | `dotnet run --treenode-filter /*/*/TestClass/*` |
 | Create migration | `cd src/RSSVibe.Data && bash add_migration.sh MigrationName` |
 | Branch naming | `feature/{description}` or `bugfix/{description}` |
 | Commit style | Conventional commits explaining WHY |
