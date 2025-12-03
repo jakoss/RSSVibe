@@ -1,0 +1,64 @@
+@using MudBlazor
+@using RSSVibe.Contracts.FeedAnalyses
+@using RSSVibe.Client.Services
+
+@if (PendingAnalyses?.Count > 0)
+{
+    <MudPaper Class="pa-6 mb-6">
+        <div class="d-flex align-center justify-space-between mb-4">
+            <MudText Typo="Typo.h5" Class="font-weight-bold">Pending Reviews</MudText>
+            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled">
+                @PendingAnalyses.Count
+            </MudChip>
+        </div>
+
+        <MudGrid Spacing="2">
+            @{
+                var itemsToDisplay = PendingAnalyses.Take(MaxItems).ToList();
+            }
+
+            @foreach (var analysis in itemsToDisplay)
+            {
+                <MudItem xs="12" sm="6">
+                    <PendingAnalysisCard Analysis="@analysis" 
+                                        OnClick="@(() => NavigateToAnalysis(analysis.AnalysisId))" />
+                </MudItem>
+            }
+        </MudGrid>
+
+        @if (PendingAnalyses.Count > MaxItems)
+        {
+            <div class="d-flex justify-center mt-4">
+                <MudLink Href="/feed-analyses" Color="Color.Primary">
+                    View All Analyses (@PendingAnalyses.Count total)
+                </MudLink>
+            </div>
+        }
+    </MudPaper>
+}
+
+@code {
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    /// <summary>
+    /// Pending analyses to display in the section.
+    /// </summary>
+    [Parameter]
+    public IReadOnlyList<FeedAnalysisListItemDto>? PendingAnalyses { get; set; }
+
+    /// <summary>
+    /// Maximum number of analyses to display before showing "View All" link.
+    /// Default is 5.
+    /// </summary>
+    [Parameter]
+    public int MaxItems { get; set; } = 5;
+
+    /// <summary>
+    /// Navigate to the analysis detail page.
+    /// </summary>
+    private void NavigateToAnalysis(Guid analysisId)
+    {
+        NavigationManager.NavigateTo($"/feed-analyses/{analysisId}");
+    }
+}

@@ -1,0 +1,94 @@
+@using MudBlazor
+@using RSSVibe.Contracts.FeedAnalyses
+
+<MudCard class="analysis-card mud-elevation-1" @onclick="OnClick" style="cursor: pointer;">
+    <MudCardContent>
+        <div class="d-flex flex-column gap-2">
+            <div>
+                <MudText Typo="Typo.subtitle1" class="font-weight-bold text-truncate">
+                    @TruncateUrl(Analysis.TargetUrl)
+                </MudText>
+            </div>
+
+            <div class="d-flex align-center gap-2 flex-wrap">
+                <AnalysisStatusBadge Status="@Analysis.Status" Size="Size.Small" />
+
+                @if (Analysis.Warnings.Length > 0)
+                {
+                    <MudChip T="string" Size="Size.Small" 
+                             Color="Color.Warning" 
+                             Variant="Variant.Text"
+                             Icon="@Icons.Material.Filled.WarningAmber">
+                        @Analysis.Warnings.Length warning@(Analysis.Warnings.Length != 1 ? "s" : "")
+                    </MudChip>
+                }
+            </div>
+
+            <MudText Typo="Typo.caption" Color="Color.Tertiary">
+                @FormatTimestamp(Analysis.AnalysisCompletedAt ?? Analysis.AnalysisStartedAt)
+            </MudText>
+        </div>
+    </MudCardContent>
+</MudCard>
+
+<style>
+    .analysis-card {
+        transition: all 0.2s ease;
+        border-left: 4px solid transparent;
+    }
+
+    .analysis-card:hover {
+        transform: translateX(4px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+</style>
+
+@code {
+    /// <summary>
+    /// Feed analysis data to display.
+    /// </summary>
+    [Parameter]
+    public FeedAnalysisListItemDto Analysis { get; set; } = default!;
+
+    /// <summary>
+    /// Click handler for navigation to analysis detail.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
+    /// <summary>
+    /// Truncate long URLs for display in card.
+    /// </summary>
+    private string TruncateUrl(string url, int maxLength = 60)
+    {
+        if (string.IsNullOrEmpty(url))
+            return "Unknown URL";
+
+        return url.Length > maxLength
+            ? url[..maxLength] + "..."
+            : url;
+    }
+
+    /// <summary>
+    /// Format timestamp for display (shows relative time or date).
+    /// </summary>
+    private string FormatTimestamp(DateTimeOffset? dateTime)
+    {
+        if (!dateTime.HasValue)
+            return "Not started";
+
+        var now = DateTimeOffset.UtcNow;
+        var diff = now - dateTime.Value;
+
+        if (diff.TotalMinutes < 1)
+            return "Just now";
+        if (diff.TotalHours < 1)
+            return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalDays < 1)
+            return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalDays < 7)
+            return $"{(int)diff.TotalDays}d ago";
+
+        return dateTime.Value.ToString("MMM d, yyyy");
+    }
+}

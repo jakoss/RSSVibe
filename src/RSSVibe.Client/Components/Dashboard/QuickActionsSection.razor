@@ -1,0 +1,43 @@
+@using MudBlazor
+
+<MudPaper Class="pa-6">
+    <MudText Typo="Typo.h5" Class="mb-4 font-weight-bold">Quick Actions</MudText>
+
+    <MudGrid Spacing="2">
+        <MudItem xs="12" sm="6" md="4">
+            <MudButton FullWidth="true"
+                      Variant="Variant.Filled"
+                      Color="Color.Primary"
+                      Size="Size.Large"
+                      StartIcon="@Icons.Material.Filled.Add"
+                      Href="/feed-analyses">
+                Create Feed Analysis
+            </MudButton>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudButton FullWidth="true"
+                      Variant="Variant.Outlined"
+                      Color="Color.Primary"
+                      Size="Size.Large"
+                      StartIcon="@Icons.Material.Filled.RssFeed"
+                      Href="/feeds">
+                View All Feeds
+            </MudButton>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudButton FullWidth="true"
+                      Variant="Variant.Outlined"
+                      Color="Color.Primary"
+                      Size="Size.Large"
+                      StartIcon="@Icons.Material.Filled.Assessment"
+                      Href="/feed-analyses">
+                View All Analyses
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@code {
+}

@@ -37,6 +37,8 @@ Additionally, review the following additional information:
    - Entity Framework Core with strongly-typed JSON properties
    - ASP.NET Core Identity for authentication
    - Hierarchical endpoint organization (MapGroup pattern)
+   - Typed API clients for all endpoints (IXxxClient interfaces)
+   - Integration tests MUST use typed API clients (NOT HttpClient.GetAsync/PostAsync)
    </implementation_rules>
 
 Your task is to create a comprehensive implementation plan for each specified REST API endpoint. Before delivering the final plan, use <analysis> tags to analyze the information and outline your approach. In this analysis, ensure that:
@@ -107,6 +109,9 @@ The final output should be a well-organized implementation plan in markdown form
 ### Service Layer Types
 [Command/Result types for service layer in RSSVibe.Services]
 
+### API Client Interface
+[Method signature to add to IXxxClient interface for typed client access]
+
 ### Validation Rules
 [FluentValidation rules as nested Validator class]
 
@@ -142,8 +147,9 @@ The final output should be a well-organized implementation plan in markdown form
 3. **Implement Validation** - Create FluentValidation validator as nested class
 4. **Create Endpoint** - Implement minimal API endpoint with TypedResults
 5. **Register Endpoint** - Add to appropriate MapGroup hierarchy
-6. **Add Tests** - Create integration tests covering all scenarios
-7. **Update Documentation** - Add OpenAPI metadata
+6. **Create API Client Methods** - Add typed client methods to appropriate IXxxClient interface and implementation
+7. **Add Tests** - Create integration tests using typed API clients (NOT raw HttpClient)
+8. **Update Documentation** - Add OpenAPI metadata
 ```
 
 The final output should consist solely of the implementation plan in markdown format and should not duplicate or repeat any work done in the analysis section.

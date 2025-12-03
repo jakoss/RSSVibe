@@ -1,0 +1,47 @@
+@using MudBlazor
+@using RSSVibe.Client.Models.Dashboard
+
+@if (Items?.Count > 0)
+{
+    <MudList T="RecentFeedItem" Dense="true" Clickable="false" DisableGutters="true">
+        @{
+            var itemsToDisplay = Items.Take(MaxItems).ToList();
+        }
+
+        @foreach (var item in itemsToDisplay)
+        {
+            <FeedItemCard Item="@item" ShowFeedAttribution="true" />
+        }
+    </MudList>
+
+    @if (Items.Count > MaxItems)
+    {
+        <div class="d-flex justify-center mt-4">
+            <MudLink Href="/feeds" Color="Color.Primary">
+                View All Feeds (@Items.Count total)
+            </MudLink>
+        </div>
+    }
+}
+else
+{
+    <MudAlert Severity="Severity.Info" Dense="true">
+        <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-2" />
+        No items yet. Your feeds will update automatically.
+    </MudAlert>
+}
+
+@code {
+    /// <summary>
+    /// Recent feed items to display in the list.
+    /// </summary>
+    [Parameter]
+    public IReadOnlyList<RecentFeedItem>? Items { get; set; }
+
+    /// <summary>
+    /// Maximum number of items to display before showing "View All" link.
+    /// Default is 20.
+    /// </summary>
+    [Parameter]
+    public int MaxItems { get; set; } = 20;
+}

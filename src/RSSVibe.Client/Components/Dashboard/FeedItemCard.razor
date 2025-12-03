@@ -1,0 +1,91 @@
+@using MudBlazor
+@using RSSVibe.Client.Models.Dashboard
+
+<MudCard Elevation="0" class="feed-item-card">
+    <MudCardContent>
+        <div class="d-flex gap-2">
+            <div style="flex: 1;">
+                <a href="@Item.Link" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   class="feed-item-link">
+                    <MudText Typo="Typo.h6" class="font-weight-bold mb-2">@Item.Title</MudText>
+                </a>
+
+                @if (ShowFeedAttribution)
+                {
+                    <div class="d-flex align-center gap-2 mb-1">
+                        <MudLink Href="@($"/feeds/{Item.FeedId}")" Color="Color.Secondary">
+                            <MudText Typo="Typo.caption">@Item.FeedTitle</MudText>
+                        </MudLink>
+                        <MudDivider Vertical="true" FlexItem="false" />
+                        <MudText Typo="Typo.caption" Color="Color.Tertiary">
+                            @FormatDate(Item.PublishedAt ?? Item.DiscoveredAt)
+                        </MudText>
+                    </div>
+                }
+            </div>
+            <MudIcon Icon="@Icons.Material.Filled.Launch" Size="Size.Small" Color="Color.Tertiary" />
+        </div>
+    </MudCardContent>
+</MudCard>
+
+<style>
+    .feed-item-card {
+        border-bottom: 1px solid var(--mud-palette-divider);
+        border-radius: 0;
+        transition: background-color 0.2s ease;
+    }
+
+    .feed-item-card:last-child {
+        border-bottom: none;
+    }
+
+    .feed-item-card:hover {
+        background-color: var(--mud-palette-action-hover);
+    }
+
+    .feed-item-link {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .feed-item-link:hover {
+        color: var(--mud-palette-primary);
+        text-decoration: underline;
+    }
+</style>
+
+@code {
+    /// <summary>
+    /// Recent feed item to display with title, link, and feed attribution.
+    /// </summary>
+    [Parameter]
+    public RecentFeedItem Item { get; set; } = default!;
+
+    /// <summary>
+    /// Whether to display the feed name and publication date.
+    /// </summary>
+    [Parameter]
+    public bool ShowFeedAttribution { get; set; } = true;
+
+    /// <summary>
+    /// Format a DateTime for display (shows relative time for recent items).
+    /// </summary>
+    private string FormatDate(DateTimeOffset date)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var diff = now - date;
+
+        if (diff.TotalMinutes < 1)
+            return "Just now";
+        if (diff.TotalHours < 1)
+            return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalDays < 1)
+            return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalDays < 7)
+            return $"{(int)diff.TotalDays}d ago";
+
+        return date.ToString("MMM d, yyyy");
+    }
+}

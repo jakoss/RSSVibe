@@ -3,6 +3,8 @@
     <File Path="AGENTS.md" />
     <File Path=".ai/prd.md" />
     <File Path=".ai/db-plan.md" />
+    <File Path=".ai/api-plan.md" />
+    <File Path=".ai/ui-plan.md" />
     <File Path=".ai/tech-stack.md" />
   </Folder>
   <Folder Name="/Directory Props/">

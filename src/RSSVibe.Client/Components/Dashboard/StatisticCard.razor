@@ -1,0 +1,78 @@
+@using MudBlazor
+
+<MudCard @attributes="GetCardAttributes()" 
+         @onclick="OnClick">
+    <MudCardContent>
+        <div class="d-flex align-center justify-space-between">
+            <div>
+                <MudText Typo="Typo.h3" class="font-weight-bold">@Value</MudText>
+                <MudText Typo="Typo.body2">@Label</MudText>
+            </div>
+            <MudIcon Icon="@Icon" Size="Size.Large" Color="@Color" />
+        </div>
+    </MudCardContent>
+</MudCard>
+
+<style>
+    .cursor-pointer {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .cursor-pointer:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+@code {
+    /// <summary>
+    /// MudBlazor icon name to display (e.g., Icons.Material.Filled.RssFeed).
+    /// </summary>
+    [Parameter]
+    public string Icon { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Metric label displayed below the value (e.g., "Total Feeds").
+    /// </summary>
+    [Parameter]
+    public string Label { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Numeric value to display prominently.
+    /// </summary>
+    [Parameter]
+    public int Value { get; set; }
+
+    /// <summary>
+    /// MudBlazor color for icon and accent styling.
+    /// </summary>
+    [Parameter]
+    public Color Color { get; set; } = Color.Default;
+
+    /// <summary>
+    /// Whether card is interactive (shows hover effect and click handler).
+    /// </summary>
+    [Parameter]
+    public bool IsClickable { get; set; }
+
+    /// <summary>
+    /// Click handler callback for navigation or other actions.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
+    private Dictionary<string, object> GetCardAttributes()
+    {
+        var attrs = new Dictionary<string, object>
+        {
+            { "class", $"mud-elevation-1 {(IsClickable ? "cursor-pointer" : "")}" }
+        };
+
+        if (IsClickable)
+        {
+            attrs["style"] = "cursor: pointer;";
+        }
+
+        return attrs;
+    }
+}

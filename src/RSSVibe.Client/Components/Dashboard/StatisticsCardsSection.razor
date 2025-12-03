@@ -1,0 +1,75 @@
+@using MudBlazor
+@using RSSVibe.Client.Models.Dashboard
+
+<MudGrid Spacing="2">
+    <MudItem xs="12" sm="6" md="3">
+        <StatisticCard Icon="@Icons.Material.Filled.RssFeed"
+                       Label="Total Feeds"
+                       Value="@Statistics.TotalFeeds"
+                       Color="Color.Primary"
+                       IsClickable="false" />
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="3">
+        <StatisticCard Icon="@Icons.Material.Filled.CheckCircle"
+                       Label="Active Feeds"
+                       Value="@Statistics.ActiveFeeds"
+                       Color="Color.Success"
+                       IsClickable="false" />
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="3">
+        <StatisticCard Icon="@(Statistics.FailingFeeds > 0 ? Icons.Material.Filled.Error : Icons.Material.Filled.CheckCircle)"
+                       Label="Failing Feeds"
+                       Value="@Statistics.FailingFeeds"
+                       Color="@(Statistics.FailingFeeds > 0 ? Color.Error : Color.Default)"
+                       IsClickable="@(Statistics.FailingFeeds > 0)"
+                       OnClick="@(() => HandleFailingFeedsClick())" />
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="3">
+        <StatisticCard Icon="@(Statistics.PendingAnalyses > 0 ? Icons.Material.Filled.Pending : Icons.Material.Filled.Done)"
+                       Label="Pending Analyses"
+                       Value="@Statistics.PendingAnalyses"
+                       Color="@(Statistics.PendingAnalyses > 0 ? Color.Warning : Color.Default)"
+                       IsClickable="@(Statistics.PendingAnalyses > 0)"
+                       OnClick="@(() => HandlePendingAnalysesClick())" />
+    </MudItem>
+</MudGrid>
+
+@code {
+    /// <summary>
+    /// Aggregated statistics to display in cards.
+    /// </summary>
+    [Parameter]
+    public DashboardStatistics Statistics { get; set; } = default!;
+
+    /// <summary>
+    /// Callback fired when a clickable card is clicked.
+    /// Provides the navigation target (e.g., "failed", "pending").
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> OnCardClick { get; set; }
+
+    /// <summary>
+    /// Handle click on failing feeds card (navigate to failed feeds).
+    /// </summary>
+    private async Task HandleFailingFeedsClick()
+    {
+        if (Statistics.FailingFeeds > 0)
+        {
+            await OnCardClick.InvokeAsync("failed");
+        }
+    }
+
+    /// <summary>
+    /// Handle click on pending analyses card (navigate to pending analyses).
+    /// </summary>
+    private async Task HandlePendingAnalysesClick()
+    {
+        if (Statistics.PendingAnalyses > 0)
+        {
+            await OnCardClick.InvokeAsync("pending");
+        }
+    }
+}

@@ -1,7 +1,297 @@
-﻿@page "/"
+@page "/"
+@implements IAsyncDisposable
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Home - RSSVibe</PageTitle>
 
-<h1>Hello, world!</h1>
+<AuthorizeView>
+    <Authorized>
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-6">
+            @if (_isLoading)
+            {
+                <LoadingSkeleton Type="full" />
+            }
+            else if (_error is not null)
+            {
+                <ErrorDisplay Error="@_error" OnRetry="@LoadDashboardDataAsync" />
+            }
+            else if (_dashboardData is null || (_dashboardData.Statistics.TotalFeeds == 0 && _dashboardData.Analyses.Count == 0))
+            {
+                <EmptyState />
+            }
+            else
+            {
+                <MudGrid Spacing="2">
+                    <MudItem xs="12">
+                        <StatisticsCardsSection Statistics="@_dashboardData.Statistics" 
+                                               OnCardClick="@HandleStatisticCardClick" />
+                    </MudItem>
 
-Welcome to your new app.
+                    <MudItem xs="12">
+                        <RecentActivitySection RecentItems="@_dashboardData.RecentItems" />
+                    </MudItem>
+
+                    @if (_dashboardData.Analyses.Any(a => a.Status == "pending" || a.Status == "completed"))
+                    {
+                        <MudItem xs="12">
+                            <PendingAnalysesSection PendingAnalyses="@_dashboardData.Analyses" />
+                        </MudItem>
+                    }
+
+                    <MudItem xs="12">
+                        <QuickActionsSection />
+                    </MudItem>
+                </MudGrid>
+            }
+        </MudContainer>
+    </Authorized>
+
+    <NotAuthorized>
+        <RedirectToLogin />
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [Inject]
+    private IRSSVibeApiClient ApiClient { get; set; } = default!;
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    private DashboardData? _dashboardData;
+    private bool _isLoading = true;
+    private ErrorDisplay.ErrorInfo? _error;
+    private CancellationTokenSource? _cts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _cts = new CancellationTokenSource();
+        await LoadDashboardDataAsync();
+    }
+
+    private async Task LoadDashboardDataAsync()
+    {
+        _isLoading = true;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            // Fetch feeds
+            var feedsResponse = await FetchFeedsAsync(_cts!.Token);
+            if (feedsResponse is null)
+            {
+                _error = new ErrorDisplay.ErrorInfo
+                {
+                    Title = "Failed to load feeds",
+                    Detail = "Could not retrieve your feeds from the server."
+                };
+                return;
+            }
+
+            // Fetch analyses
+            var analysesResponse = await FetchAnalysesAsync(_cts.Token);
+            if (analysesResponse is null)
+            {
+                _error = new ErrorDisplay.ErrorInfo
+                {
+                    Title = "Failed to load analyses",
+                    Detail = "Could not retrieve your feed analyses from the server."
+                };
+                return;
+            }
+
+            // Fetch recent items
+            var recentItems = await FetchRecentItemsAsync(feedsResponse.Items, _cts.Token);
+
+            // Calculate statistics
+            var statistics = CalculateStatistics(feedsResponse.Items, analysesResponse.Items);
+
+            _dashboardData = new DashboardData(
+                Feeds: feedsResponse.Items,
+                Analyses: analysesResponse.Items,
+                RecentItems: recentItems,
+                Statistics: statistics
+            );
+        }
+        catch (OperationCanceledException)
+        {
+            _error = new ErrorDisplay.ErrorInfo
+            {
+                Title = "Request cancelled",
+                Detail = "The request took too long and was cancelled. Please try again."
+            };
+        }
+        catch (HttpRequestException)
+        {
+            _error = new ErrorDisplay.ErrorInfo
+            {
+                Title = "Connection error",
+                Detail = "Unable to connect to the server. Please check your internet connection and try again."
+            };
+        }
+        catch (Exception ex)
+        {
+            _error = new ErrorDisplay.ErrorInfo
+            {
+                Title = "An unexpected error occurred",
+                Detail = ex.Message
+            };
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task<ListFeedsResponse?> FetchFeedsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await ApiClient.Feeds.ListAsync(
+                new ListFeedsRequest(
+                    Skip: 0,
+                    Take: 50,
+                    Sort: "lastParsedAt:desc",
+                    Status: null,
+                    Search: null
+                ),
+                cancellationToken);
+
+            if (result.IsSuccess)
+            {
+                return result.Data;
+            }
+
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task<ListFeedAnalysesResponse?> FetchAnalysesAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var analysesResult = await ApiClient.FeedAnalyses.ListAsync(
+                new ListFeedAnalysesRequest(
+                    Status: null,
+                    Sort: "createdAt:desc",
+                    Skip: 0,
+                    Take: 20,
+                    Search: null
+                ),
+                cancellationToken);
+
+            if (analysesResult.IsSuccess)
+            {
+                return analysesResult.Data;
+            }
+
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task<IReadOnlyList<RecentFeedItem>> FetchRecentItemsAsync(
+        IReadOnlyList<FeedListItemDto> feeds,
+        CancellationToken cancellationToken)
+    {
+        var recentItems = new List<RecentFeedItem>();
+
+        // Limit to top 10 feeds by last parsed date to avoid too many API calls
+        var feedsToFetch = feeds
+            .Where(f => f.LastParsedAt.HasValue)
+            .OrderByDescending(f => f.LastParsedAt)
+            .Take(10)
+            .ToList();
+
+        foreach (var feed in feedsToFetch)
+        {
+            try
+            {
+                var result = await ApiClient.Feeds.ListItemsAsync(
+                    feed.FeedId,
+                    new ListFeedItemsRequest(
+                        Skip: 0,
+                        Take: 5,
+                        Sort: "publishedAt:desc",
+                        Since: null,
+                        Until: null,
+                        ChangeKind: null,
+                        IncludeMetadata: false
+                    ),
+                    cancellationToken);
+
+                if (result.IsSuccess && result.Data?.Items is not null)
+                {
+                    foreach (var item in result.Data.Items)
+                    {
+                        recentItems.Add(new RecentFeedItem(
+                            ItemId: item.ItemId,
+                            Title: item.Title,
+                            Link: item.Link,
+                            PublishedAt: item.PublishedAt,
+                            DiscoveredAt: item.DiscoveredAt,
+                            FeedTitle: feed.Title,
+                            FeedId: feed.FeedId
+                        ));
+                    }
+                }
+            }
+            catch
+            {
+                // Continue with next feed if this one fails
+                continue;
+            }
+        }
+
+        // Sort by published/discovered date, newest first, limit to 20
+        return recentItems
+            .OrderByDescending(i => i.PublishedAt ?? i.DiscoveredAt)
+            .Take(20)
+            .ToList();
+    }
+
+    private DashboardStatistics CalculateStatistics(
+        IReadOnlyList<FeedListItemDto> feeds,
+        IReadOnlyList<FeedAnalysisListItemDto> analyses)
+    {
+        return new DashboardStatistics(
+            TotalFeeds: feeds.Count,
+            ActiveFeeds: feeds.Count(f => f.LastParseStatus == "succeeded"),
+            FailingFeeds: feeds.Count(f => f.LastParseStatus == "failed"),
+            PendingAnalyses: analyses.Count(a =>
+                a.Status == "pending" ||
+                (a.Status == "completed" && !feeds.Any(f => f.AnalysisId == a.AnalysisId))
+            )
+        );
+    }
+
+    private async Task HandleStatisticCardClick(string target)
+    {
+        switch (target)
+        {
+            case "failed":
+                NavigationManager.NavigateTo("/feeds?status=failed");
+                break;
+            case "pending":
+                NavigationManager.NavigateTo("/feed-analyses?status=pending");
+                break;
+        }
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (_cts is not null)
+        {
+            _cts.Cancel();
+            _cts.Dispose();
+        }
+    }
+}

@@ -1,0 +1,76 @@
+@using MudBlazor
+
+<MudChip T="string" Size="@Size" 
+         Color="@GetStatusColor()" 
+         Variant="Variant.Filled"
+         Icon="@(ShowIcon ? GetStatusIcon() : null)">
+    @GetStatusText()
+</MudChip>
+
+@code {
+    /// <summary>
+    /// Analysis status string ("pending", "completed", "failed", "superseded").
+    /// </summary>
+    [Parameter]
+    public string Status { get; set; } = string.Empty;
+
+    /// <summary>
+    /// MudBlazor chip size for scaling.
+    /// </summary>
+    [Parameter]
+    public Size Size { get; set; } = Size.Medium;
+
+    /// <summary>
+    /// Whether to display an icon with status text.
+    /// </summary>
+    [Parameter]
+    public bool ShowIcon { get; set; } = true;
+
+    /// <summary>
+    /// Get the color for the status badge based on status value.
+    /// </summary>
+    private Color GetStatusColor() => Status?.ToLowerInvariant() switch
+    {
+        "pending" => Color.Warning,
+        "completed" => Color.Success,
+        "failed" => Color.Error,
+        "superseded" => Color.Info,
+        _ => Color.Default
+    };
+
+    /// <summary>
+    /// Get the icon for the status based on status value.
+    /// </summary>
+    private string GetStatusIcon() => Status?.ToLowerInvariant() switch
+    {
+        "pending" => Icons.Material.Filled.Schedule,
+        "completed" => Icons.Material.Filled.CheckCircle,
+        "failed" => Icons.Material.Filled.Error,
+        "superseded" => Icons.Material.Filled.Info,
+        _ => Icons.Material.Filled.Help
+    };
+
+    /// <summary>
+    /// Get the display text for the status.
+    /// </summary>
+    private string GetStatusText() => Status?.ToLowerInvariant() switch
+    {
+        "pending" => "Pending",
+        "completed" => "Completed",
+        "failed" => "Failed",
+        "superseded" => "Superseded",
+        _ => Status ?? "Unknown"
+    };
+
+    /// <summary>
+    /// Get the tooltip description for the status.
+    /// </summary>
+    private string GetStatusDescription() => Status?.ToLowerInvariant() switch
+    {
+        "pending" => "Analysis is pending - awaiting processing",
+        "completed" => "Analysis completed successfully",
+        "failed" => "Analysis failed - please review and retry",
+        "superseded" => "This analysis has been replaced by a newer one",
+        _ => "Unknown status"
+    };
+}

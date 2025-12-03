@@ -120,6 +120,74 @@ dotnet format --verify-no-changes
 
 ---
 
+## BLAZOR CLIENT & API INTEGRATION
+
+**CRITICAL**: The RSSVibe.Client project MUST use statically-typed API clients, NOT raw HttpClient calls.
+
+### API Client Usage Pattern
+
+**ALWAYS use `IRSSVibeApiClient` injected service** for all API calls in Blazor components:
+
+```csharp
+@code {
+    [Inject]
+    private IRSSVibeApiClient ApiClient { get; set; } = default!;
+
+    private async Task LoadDataAsync()
+    {
+        // ✅ CORRECT: Use typed client
+        var result = await ApiClient.Feeds.ListAsync(
+            new ListFeedsRequest(
+                Skip: 0,
+                Take: 50,
+                Sort: "lastParsedAt:desc",
+                Status: null,
+                Search: null
+            ),
+            cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            var feeds = result.Data;
+            // Use feeds...
+        }
+
+        // ❌ WRONG: Direct HttpClient usage
+        var response = await HttpClient.GetAsync("/api/v1/feeds");
+    }
+}
+```
+
+### Available API Clients
+
+- `ApiClient.Auth` - Authentication endpoints (`/api/v1/auth`)
+- `ApiClient.FeedAnalyses` - Feed analysis endpoints (`/api/v1/feed-analyses`)
+- `ApiClient.Feeds` - Feed and feed items endpoints (`/api/v1/feeds`)
+
+### API Result Pattern
+
+All API methods return `ApiResult<TData>` or `ApiResultNoData`:
+
+```csharp
+var result = await ApiClient.Feeds.GetAsync(feedId, ct);
+
+if (result.IsSuccess)
+{
+    var feed = result.Data; // TData
+}
+else
+{
+    // Handle error
+    var errorTitle = result.ErrorTitle;
+    var errorDetail = result.ErrorDetail;
+    var statusCode = result.StatusCode;
+}
+```
+
+**For complete API client documentation**, see [`src/RSSVibe.Contracts/README.md`](src/RSSVibe.Contracts/README.md).
+
+---
+
 ## QUICK REFERENCE
 
 | Task | Command/Pattern |
@@ -137,6 +205,8 @@ dotnet format --verify-no-changes
 | Service assertions | `await using var scope = WebApplicationFactory.Services.CreateAsyncScope();`<br/>`var service = scope.ServiceProvider.GetRequiredService<Service>();` |
 | GUID generation | MUST use `Guid.CreateVersion7()` (NOT `Guid.NewGuid()`) |
 | JSON in EF | Create model class + `OwnsOne(x => x.Prop, b => b.ToJson())` |
+| **Blazor API calls** | **MUST use `ApiClient.Feeds.ListAsync()` (NOT `HttpClient.GetAsync()`)** |
+| API client access | `ApiClient.Auth`, `ApiClient.Feeds`, `ApiClient.FeedAnalyses` |
 | Service layer | All business logic in `RSSVibe.Services` project |
 | Service pattern | Interface + implementation with command/result types |
 | Service visibility | Implementations `internal sealed`, interfaces `public` |

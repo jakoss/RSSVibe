@@ -15,4 +15,9 @@ public interface IRSSVibeApiClient
     /// Feed analysis endpoints under /api/v1/feed-analyses
     /// </summary>
     IFeedAnalysesClient FeedAnalyses { get; }
+
+    /// <summary>
+    /// Feed endpoints under /api/v1/feeds
+    /// </summary>
+    IFeedsClient Feeds { get; }
 }

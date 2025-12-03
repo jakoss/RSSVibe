@@ -1,0 +1,30 @@
+@using MudBlazor
+
+<div class="d-flex justify-center align-center" style="min-height: 400px;">
+    <MudPaper Class="pa-8 text-center" Elevation="0">
+        <MudIcon Icon="@Icons.Material.Filled.RssFeed" 
+                Size="Size.Large" 
+                Color="Color.Primary" 
+                Class="mb-4"
+                Style="font-size: 80px;" />
+
+        <MudText Typo="Typo.h4" Class="mb-2 font-weight-bold">
+            Welcome to RSSVibe!
+        </MudText>
+
+        <MudText Typo="Typo.body1" Color="Color.Tertiary" Class="mb-6">
+            Get started by creating your first feed analysis to monitor RSS sources and stay updated with the latest content.
+        </MudText>
+
+        <MudButton Variant="Variant.Filled"
+                  Color="Color.Primary"
+                  Size="Size.Large"
+                  StartIcon="@Icons.Material.Filled.Add"
+                  Href="/feed-analyses">
+            Create Your First Feed Analysis
+        </MudButton>
+    </MudPaper>
+</div>
+
+@code {
+}

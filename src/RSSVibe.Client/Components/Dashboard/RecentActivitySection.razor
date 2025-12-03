@@ -1,0 +1,25 @@
+@using MudBlazor
+@using RSSVibe.Client.Models.Dashboard
+
+<MudPaper Class="pa-6 mb-6">
+    <MudText Typo="Typo.h5" Class="mb-4 font-weight-bold">Recent Activity</MudText>
+
+    @if (RecentItems?.Count > 0)
+    {
+        <RecentFeedItemsList Items="@RecentItems" MaxItems="20" />
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Info">
+            No recent items. Start by creating a feed analysis to monitor your first RSS source.
+        </MudAlert>
+    }
+</MudPaper>
+
+@code {
+    /// <summary>
+    /// Recent feed items to display in the activity section.
+    /// </summary>
+    [Parameter]
+    public IReadOnlyList<RecentFeedItem>? RecentItems { get; set; }
+}

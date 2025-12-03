@@ -24,6 +24,50 @@ $ARGUMENTS
 File at .ai/tech-stack.md
 </tech_stack>
 
+4. API Client Usage:
+<api_client_usage>
+CRITICAL: All Blazor views MUST use statically-typed API clients from RSSVibe.Contracts.
+
+- NEVER use raw HttpClient.GetAsync(), HttpClient.PostAsJsonAsync(), etc.
+- ALWAYS use injected IRSSVibeApiClient service
+- Available clients: ApiClient.Auth, ApiClient.Feeds, ApiClient.FeedAnalyses
+- All API methods return ApiResult<TData> or ApiResultNoData
+- Check result.IsSuccess before accessing result.Data
+
+Example CORRECT usage:
+```csharp
+[Inject]
+private IRSSVibeApiClient ApiClient { get; set; } = default!;
+
+var result = await ApiClient.Feeds.ListAsync(
+    new ListFeedsRequest(
+        Skip: 0,
+        Take: 50,
+        Sort: "lastParsedAt:desc",
+        Status: null,
+        Search: null
+    ),
+    cancellationToken);
+
+if (result.IsSuccess)
+{
+    var feeds = result.Data;
+    // Use feeds...
+}
+else
+{
+    // Handle error: result.ErrorTitle, result.ErrorDetail, result.StatusCode
+}
+```
+
+Example WRONG usage (DO NOT DO THIS):
+```csharp
+// ❌ WRONG - Do NOT use raw HttpClient
+var response = await HttpClient.GetAsync("/api/v1/feeds?skip=0&take=50");
+var feeds = await response.Content.ReadFromJsonAsync<ListFeedsResponse>();
+```
+</api_client_usage>
+
 Before creating the final implementation plan, conduct analysis and planning inside <implementation_breakdown> tags in your thinking block. This section can be quite long, as it's important to be thorough.
 
 In your implementation breakdown, execute the following steps:
@@ -36,7 +80,12 @@ In your implementation breakdown, execute the following steps:
 4. Create a high-level component tree diagram
 5. Identify required DTOs and custom ViewModel types for each view component. Explain these new types in detail, breaking down their fields and associated types.
 6. Identify potential state variables and custom hooks, explaining their purpose and how they'll be used
-7. List required API calls and corresponding frontend actions
+7. List required API calls with typed client details:
+   - Which typed API client to use (ApiClient.Auth, ApiClient.Feeds, ApiClient.FeedAnalyses)
+   - Method name on the client
+   - Request contract type with all required parameters
+   - Response type (ApiResult<TData> wrapper)
+   - NEVER specify raw HttpClient endpoints or manual URL construction
 8. Map each user story to specific implementation details, components, or functions
 9. List user interactions and their expected outcomes
 10. List conditions required by the API and how to verify them at the component level
@@ -57,7 +106,13 @@ After conducting the analysis, provide an implementation plan in Markdown format
  - Props that the component accepts from parent (component interface)
 5. Types: Detailed description of types required for view implementation, including exact breakdown of any new types or view models by fields and types.
 6. State Management: Detailed description of how state is managed in the view, specifying whether a custom hook is required.
-7. API Integration: Explanation of how to integrate with the provided endpoint. Precisely indicate request and response types.
+7. API Integration: Explanation of how to integrate with typed API clients. MUST specify:
+   - Which API client to use (ApiClient.Auth, ApiClient.Feeds, ApiClient.FeedAnalyses)
+   - Method name on the client (e.g., ListAsync, GetAsync, CreateAsync)
+   - Request type with all parameters (positional record syntax)
+   - Response type (ApiResult<TData> wrapper)
+   - Error handling pattern (check IsSuccess, handle ErrorTitle/ErrorDetail)
+   - NEVER show raw HttpClient usage
 8. User Interactions: Detailed description of user interactions and how to handle them.
 9. Conditions and Validation: Describe what conditions are verified by the interface, which components they concern, and how they affect the interface state
 10. Error Handling: Description of how to handle potential errors or edge cases.
@@ -100,7 +155,43 @@ Here's an example of what the output file should look like (content is to be rep
 [Description of state management in the view]
 
 ## 7. API Integration
-[Explanation of integration with provided endpoint, indication of request and response types]
+**CRITICAL: Use typed API clients, NOT raw HttpClient**
+
+For each API call needed:
+- **API Client**: Which client to use (ApiClient.Auth / ApiClient.Feeds / ApiClient.FeedAnalyses)
+- **Method**: Client method name (ListAsync, GetAsync, CreateAsync, etc.)
+- **Request Type**: Request contract with all parameters (positional record syntax)
+- **Response Type**: ApiResult<TData> or ApiResultNoData
+- **Error Handling**: How to handle result.IsSuccess, result.ErrorTitle, result.ErrorDetail
+
+Example:
+```csharp
+// ✅ CORRECT - Use typed API client
+var result = await ApiClient.Feeds.ListAsync(
+    new ListFeedsRequest(
+        Skip: 0,
+        Take: 50,
+        Sort: "lastParsedAt:desc",
+        Status: null,
+        Search: null
+    ),
+    cancellationToken);
+
+if (result.IsSuccess && result.Data is not null)
+{
+    var feeds = result.Data.Items;
+    // Use data...
+}
+else
+{
+    // Handle error
+    _error = new ErrorInfo 
+    {
+        Title = result.ErrorTitle ?? "Failed to load",
+        Detail = result.ErrorDetail ?? "Could not retrieve data."
+    };
+}
+```
 
 ## 8. User Interactions
 [Detailed description of user interactions]

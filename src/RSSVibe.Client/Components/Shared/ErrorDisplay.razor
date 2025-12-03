@@ -1,0 +1,70 @@
+@using MudBlazor
+
+@if (Error is not null)
+{
+    <MudAlert Severity="Severity.Error" Dense="false" Class="mb-4">
+        <div class="d-flex flex-column gap-2">
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="font-weight-bold">
+                    @(Error.Title ?? "An error occurred")
+                </MudText>
+                @if (!string.IsNullOrEmpty(Error.Detail))
+                {
+                    <MudText Typo="Typo.body2" Class="mt-2">
+                        @Error.Detail
+                    </MudText>
+                }
+            </div>
+
+            @if (Error.StatusCode > 0)
+            {
+                <MudExpansionPanel Dense="true" Class="mt-2">
+                    <TitleContent>
+                        <MudText Typo="Typo.caption">Technical Details</MudText>
+                    </TitleContent>
+                    <ChildContent>
+                        <div class="pl-4">
+                            <MudText Typo="Typo.caption">
+                                <strong>Status Code:</strong> @Error.StatusCode
+                            </MudText>
+                        </div>
+                    </ChildContent>
+                </MudExpansionPanel>
+            }
+
+            <div class="d-flex gap-2 mt-2">
+                <MudButton Variant="Variant.Filled"
+                          Color="Color.Error"
+                          Size="Size.Small"
+                          OnClick="@OnRetry">
+                    <MudIcon Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" Class="mr-2" />
+                    Retry
+                </MudButton>
+            </div>
+        </div>
+    </MudAlert>
+}
+
+@code {
+    /// <summary>
+    /// Error information to display.
+    /// </summary>
+    [Parameter]
+    public ErrorInfo? Error { get; set; }
+
+    /// <summary>
+    /// Callback handler when retry button is clicked.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnRetry { get; set; }
+
+    /// <summary>
+    /// Simple error information model for frontend use.
+    /// </summary>
+    public class ErrorInfo
+    {
+        public string? Title { get; set; }
+        public string? Detail { get; set; }
+        public int StatusCode { get; set; }
+    }
+}

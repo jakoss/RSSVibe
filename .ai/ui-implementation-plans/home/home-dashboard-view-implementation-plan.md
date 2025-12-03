@@ -1,5 +1,9 @@
 # View Implementation Plan: Home Dashboard
 
+> **IMPORTANT**: This view MUST use typed API clients (`ApiClient.Feeds`, `ApiClient.FeedAnalyses`) for all API calls.  
+> **NEVER** use raw `HttpClient.GetAsync()` or `HttpClient.PostAsJsonAsync()`.  
+> See Section 7 (API Integration) for correct usage patterns.
+
 ## 1. Overview
 
 The Home Dashboard serves as the primary landing page for authenticated users of RSSVibe. It provides an at-a-glance overview of the user's feed ecosystem, displaying key metrics, recent activity, and quick access to common workflows. The dashboard aggregates data from multiple sources (feeds and feed analyses) to give users immediate insight into their RSS feed monitoring status, highlighting feeds requiring attention and recent content updates.
@@ -545,50 +549,140 @@ private async Task LoadDashboardDataAsync()
     try
     {
         // Fetch feeds with minimal pagination (we need all for statistics)
-        var feedsResponse = await _apiClient.Feeds.ListFeedsAsync(
-            new ListFeedsRequest
-            {
-                Skip = 0,
-                Take = 50,  // Should cover most users
-                Sort = "lastParsedAt:desc"
-            },
+        var feedsResult = await ApiClient.Feeds.ListAsync(
+            new ListFeedsRequest(
+                Skip: 0,
+                Take: 50,  // Should cover most users
+                Sort: "lastParsedAt:desc",
+                Status: null,
+                Search: null
+            ),
             _cts.Token
         );
+
+        if (!feedsResult.IsSuccess || feedsResult.Data is null)
+        {
+            _error = new ErrorDisplay.ErrorInfo
+            {
+                Title = feedsResult.ErrorTitle ?? "Failed to load feeds",
+                Detail = feedsResult.ErrorDetail ?? "Could not retrieve your feeds from the server."
+            };
+            return;
+        }
 
         // Fetch analyses (only need pending/completed)
-        var analysesResponse = await _apiClient.FeedAnalyses.ListFeedAnalysesAsync(
-            new ListFeedAnalysesRequest
-            {
-                Skip = 0,
-                Take = 20,
-                Status = null,  // Get all, filter client-side
-                Sort = "createdAt:desc"
-            },
+        var analysesResult = await ApiClient.FeedAnalyses.ListAsync(
+            new ListFeedAnalysesRequest(
+                Status: null,  // Get all, filter client-side
+                Sort: "createdAt:desc",
+                Skip: 0,
+                Take: 20,
+                Search: null
+            ),
             _cts.Token
         );
 
+        if (!analysesResult.IsSuccess || analysesResult.Data is null)
+        {
+            _error = new ErrorDisplay.ErrorInfo
+            {
+                Title = analysesResult.ErrorTitle ?? "Failed to load analyses",
+                Detail = analysesResult.ErrorDetail ?? "Could not retrieve your feed analyses from the server."
+            };
+            return;
+        }
+
         // Fetch recent items (aggregate from multiple feeds)
-        var recentItems = await FetchRecentItemsAsync(feedsResponse.Items, _cts.Token);
+        var recentItems = await FetchRecentItemsAsync(feedsResult.Data.Items, _cts.Token);
 
         // Calculate statistics
-        var statistics = CalculateStatistics(feedsResponse.Items, analysesResponse.Items);
+        var statistics = CalculateStatistics(feedsResult.Data.Items, analysesResult.Data.Items);
 
         _dashboardData = new DashboardData(
-            Feeds: feedsResponse.Items,
-            Analyses: analysesResponse.Items,
+            Feeds: feedsResult.Data.Items,
+            Analyses: analysesResult.Data.Items,
             RecentItems: recentItems,
             Statistics: statistics
         );
     }
     catch (Exception ex)
     {
-        _error = new ProblemDetails { Title = "Failed to load dashboard", Detail = ex.Message };
+        _error = new ErrorDisplay.ErrorInfo
+        {
+            Title = "An unexpected error occurred",
+            Detail = ex.Message
+        };
     }
     finally
     {
         _isLoading = false;
         StateHasChanged();
     }
+}
+```
+
+**FetchRecentItemsAsync Helper (Using Typed API Client)**:
+
+```csharp
+private async Task<IReadOnlyList<RecentFeedItem>> FetchRecentItemsAsync(
+    IReadOnlyList<FeedListItemDto> feeds,
+    CancellationToken cancellationToken)
+{
+    var recentItems = new List<RecentFeedItem>();
+
+    // Limit to top 10 feeds by last parsed date to avoid too many API calls
+    var feedsToFetch = feeds
+        .Where(f => f.LastParsedAt.HasValue)
+        .OrderByDescending(f => f.LastParsedAt)
+        .Take(10)
+        .ToList();
+
+    foreach (var feed in feedsToFetch)
+    {
+        try
+        {
+            // ✅ CORRECT - Use typed API client
+            var result = await ApiClient.Feeds.ListItemsAsync(
+                feed.FeedId,
+                new ListFeedItemsRequest(
+                    Skip: 0,
+                    Take: 5,
+                    Sort: "publishedAt:desc",
+                    Since: null,
+                    Until: null,
+                    ChangeKind: null,
+                    IncludeMetadata: false
+                ),
+                cancellationToken);
+
+            if (result.IsSuccess && result.Data?.Items is not null)
+            {
+                foreach (var item in result.Data.Items)
+                {
+                    recentItems.Add(new RecentFeedItem(
+                        ItemId: item.ItemId,
+                        Title: item.Title,
+                        Link: item.Link,
+                        PublishedAt: item.PublishedAt,
+                        DiscoveredAt: item.DiscoveredAt,
+                        FeedTitle: feed.Title,
+                        FeedId: feed.FeedId
+                    ));
+                }
+            }
+        }
+        catch
+        {
+            // Continue with next feed if this one fails
+            continue;
+        }
+    }
+
+    // Sort by published/discovered date, newest first, limit to 20
+    return recentItems
+        .OrderByDescending(i => i.PublishedAt ?? i.DiscoveredAt)
+        .Take(20)
+        .ToList();
 }
 ```
 
@@ -617,48 +711,55 @@ private DashboardStatistics CalculateStatistics(
 
 ### 1. List Feeds
 - **Endpoint**: `GET /api/v1/feeds`
+- **API Client**: `ApiClient.Feeds.ListAsync()`
 - **Request Type**: `ListFeedsRequest`
 - **Request Parameters**:
   ```csharp
-  {
-      Skip = 0,
-      Take = 50,
-      Sort = "lastParsedAt:desc",
-      Status = null,  // Get all
-      IncludeInactive = true
-  }
+  new ListFeedsRequest(
+      Skip: 0,
+      Take: 50,
+      Sort: "lastParsedAt:desc",
+      Status: null,  // Get all
+      Search: null
+  )
   ```
-- **Response Type**: `ListFeedsResponse`
+- **Response Type**: `ApiResult<ListFeedsResponse>`
 - **Purpose**: Fetch all user feeds for statistics and recent items
 
 ### 2. List Feed Analyses
 - **Endpoint**: `GET /api/v1/feed-analyses`
+- **API Client**: `ApiClient.FeedAnalyses.ListAsync()`
 - **Request Type**: `ListFeedAnalysesRequest`
 - **Request Parameters**:
   ```csharp
-  {
-      Skip = 0,
-      Take = 20,
-      Status = null,  // Get all, filter client-side
-      Sort = "createdAt:desc"
-  }
+  new ListFeedAnalysesRequest(
+      Status: null,  // Get all, filter client-side
+      Sort: "createdAt:desc",
+      Skip: 0,
+      Take: 20,
+      Search: null
+  )
   ```
-- **Response Type**: `ListFeedAnalysesResponse`
+- **Response Type**: `ApiResult<ListFeedAnalysesResponse>`
 - **Purpose**: Fetch analyses for pending analyses section
 
 ### 3. List Feed Items (per feed - aggregated)
 - **Endpoint**: `GET /api/v1/feeds/{feedId}/items` (called for each feed)
+- **API Client**: `ApiClient.Feeds.ListItemsAsync(feedId, request)`
 - **Request Type**: `ListFeedItemsRequest`
 - **Request Parameters**:
   ```csharp
-  {
-      Skip = 0,
-      Take = 5,  // Only need recent items per feed
-      Sort = "publishedAt:desc",
-      IncludeMetadata = false
-  }
+  new ListFeedItemsRequest(
+      Skip: 0,
+      Take: 5,  // Only need recent items per feed
+      Sort: "publishedAt:desc",
+      Since: null,
+      Until: null,
+      ChangeKind: null,
+      IncludeMetadata: false
+  )
   ```
-- **Response Type**: `ListFeedItemsResponse`
+- **Response Type**: `ApiResult<ListFeedItemsResponse>`
 - **Purpose**: Fetch recent items for activity feed
 - **Optimization**: Limit to top 3-5 feeds by last parsed date to reduce API calls
 
