@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using RSSVibe.Data;
 using System.Diagnostics;
+using TickerQ.EntityFrameworkCore.DbContextFactory;
 
 namespace RSSVibe.MigrationService;
 
@@ -18,10 +19,13 @@ public class Worker(
 
         try
         {
-            using var scope = serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<RssVibeDbContext>();
+            await using var scope = serviceProvider.CreateAsyncScope();
+            await using var dbContext = scope.ServiceProvider.GetRequiredService<RssVibeDbContext>();
+            await dbContext.Database.MigrateAsync(stoppingToken);
 
-            await RunMigrationAsync(dbContext, stoppingToken);
+            await using var tickerQDbContext = scope.ServiceProvider.GetRequiredService<TickerQDbContext>();
+            await tickerQDbContext.Database.MigrateAsync(stoppingToken);
+
         }
         catch (Exception ex)
         {
@@ -30,15 +34,5 @@ public class Worker(
         }
 
         hostApplicationLifetime.StopApplication();
-    }
-
-    private static async Task RunMigrationAsync(RssVibeDbContext dbContext, CancellationToken cancellationToken)
-    {
-        var strategy = dbContext.Database.CreateExecutionStrategy();
-        await strategy.ExecuteAsync(dbContext, async (dbCtx, cncToken) =>
-        {
-            // Run migration in a transaction to avoid partial migration if it fails.
-            await dbCtx.Database.MigrateAsync(cncToken);
-        }, cancellationToken);
     }
 }

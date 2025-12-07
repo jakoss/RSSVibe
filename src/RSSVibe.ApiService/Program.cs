@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RSSVibe.ApiService.Configuration;
 using RSSVibe.ApiService.Endpoints;
@@ -16,6 +17,12 @@ using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
+using TickerQ.Dashboard.DependencyInjection;
+using TickerQ.DependencyInjection;
+using TickerQ.EntityFrameworkCore.DbContextFactory;
+using TickerQ.EntityFrameworkCore.DependencyInjection;
+using TickerQ.Instrumentation.OpenTelemetry;
+using TickerQ.Utilities.Enums;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -133,6 +140,35 @@ builder.Services.AddHttpClient("PreflightClient")
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequest>();
 builder.Services.AddFluentValidationAutoValidation();
 
+builder.Services.AddTickerQ(options =>
+{
+    options.ConfigureScheduler(scheduler =>
+    {
+        scheduler.MaxConcurrency = 10;
+        scheduler.SchedulerTimeZone = TimeZoneInfo.Utc;
+    });
+    
+    options.AddOpenTelemetryInstrumentation();
+    options.AddOperationalStore(storeBuilder =>
+    {
+        storeBuilder.UseTickerQDbContext<TickerQDbContext>(optBuilder =>
+        {
+            var connectionString = builder.Configuration.GetConnectionString("rssvibedb")!;
+            optBuilder.UseNpgsql(connectionString, optionsBuilder =>
+            {
+                optionsBuilder.MigrationsAssembly("RSSVibe.Data");
+                optionsBuilder.MigrationsHistoryTable("__EFMigrationsHistory", "tickerq");
+            });
+        }, schema: "tickerq");
+    });
+    options.AddDashboard(dashboardOptions =>
+    {
+        dashboardOptions.SetBasePath("/admin/jobs");
+        // dashboardOptions.WithHostAuthentication();
+    });
+});
+builder.EnrichNpgsqlDbContext<TickerQDbContext>();
+
 // Configure rate limiting to prevent brute force attacks on password operations
 // Skip rate limiting in integration tests to avoid test failures
 if (!builder.Environment.IsIntegrationTests())
@@ -187,34 +223,35 @@ app.MapApiV1();
 
 app.MapDefaultEndpoints();
 
-// Create test user
 if (!app.Environment.IsIntegrationTests())
 {
-// TODO: Parametrize this in the future
-    using (var scope = app.Services.CreateScope())
+    // Do not start TickerQ in integration tests
+    app.UseTickerQ();
+    
+    // Create test user
+    // TODO: Parametrize this in the future
+    using var scope = app.Services.CreateScope();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+    var testUser = new ApplicationUser
     {
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        Id = Guid.CreateVersion7(),
+        UserName = "TestUser",
+        Email = "test@test.com",
+        DisplayName = "Test User",
+        MustChangePassword = false,
+        CreatedAt = DateTimeOffset.UtcNow
+    };
 
-        var testUser = new ApplicationUser
+    var existingUser = await userManager.FindByEmailAsync(testUser.Email);
+
+    if (existingUser is null)
+    {
+        var createResult = await userManager.CreateAsync(testUser, "P@ssw0rd1234");
+        if (!createResult.Succeeded)
         {
-            Id = Guid.CreateVersion7(),
-            UserName = "TestUser",
-            Email = "test@test.com",
-            DisplayName = "Test User",
-            MustChangePassword = false,
-            CreatedAt = DateTimeOffset.UtcNow
-        };
-
-        var existingUser = await userManager.FindByEmailAsync(testUser.Email);
-
-        if (existingUser is null)
-        {
-            var createResult = await userManager.CreateAsync(testUser, "P@ssw0rd1234");
-            if (!createResult.Succeeded)
-            {
-                throw new InvalidOperationException(
-                    $"Failed to create test user: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
-            }
+            throw new InvalidOperationException(
+                $"Failed to create test user: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
         }
     }
 }

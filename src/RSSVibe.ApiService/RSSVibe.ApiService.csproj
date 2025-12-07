@@ -20,5 +20,8 @@
       </PackageReference>
        <PackageReference Include="Scalar.AspNetCore" />
        <PackageReference Include="SharpGrip.FluentValidation.AutoValidation.Endpoints" />
+       <PackageReference Include="TickerQ" />
+       <PackageReference Include="TickerQ.Dashboard" />
+      <PackageReference Include="TickerQ.Instrumentation.OpenTelemetry" />
    </ItemGroup>
 </Project>

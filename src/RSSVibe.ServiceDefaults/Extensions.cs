@@ -53,7 +53,7 @@ public static class Extensions
             logging.IncludeFormattedMessage = true;
             logging.IncludeScopes = true;
         });
-
+        
         builder.Services.AddOpenTelemetry()
             .WithMetrics(metrics =>
             {
@@ -70,8 +70,7 @@ public static class Extensions
                             !context.Request.Path.StartsWithSegments(HealthEndpointPath)
                             && !context.Request.Path.StartsWithSegments(AlivenessEndpointPath)
                     )
-                    // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
-                    //.AddGrpcClientInstrumentation()
+                    .AddSource("TickerQ")
                     .AddHttpClientInstrumentation();
             });
 

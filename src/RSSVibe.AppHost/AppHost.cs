@@ -20,7 +20,27 @@ var migrationService = builder.AddProject<Projects.RSSVibe_MigrationService>("mi
 
 var apiService = builder.AddProject<Projects.RSSVibe_ApiService>("apiservice")
     .WithHttpHealthCheck("/health")
-    .WithUrl("/scalar/v1", "Scalar") // TODO: Add endpoint for the api itself
+    .WithUrls(context =>
+    {
+        if (context.Urls.Any(e => e.Endpoint?.EndpointName.StartsWith("https", StringComparison.OrdinalIgnoreCase) != true))
+        {
+            return;
+        }
+        foreach (var url in context.Urls)
+        {
+            switch (url.Endpoint?.EndpointName)
+            {
+                case "https":
+                    url.DisplayText = "Scalar";
+                    url.Url = "/scalar";
+                    break;
+                case "https2":
+                    url.DisplayText = "TickerQ";
+                    url.Url = "/admin/jobs";
+                    break;
+            }
+        }
+    })
     .WithReference(rssvibeDb)
     .WaitFor(rssvibeDb)
     .WithReference(migrationService)

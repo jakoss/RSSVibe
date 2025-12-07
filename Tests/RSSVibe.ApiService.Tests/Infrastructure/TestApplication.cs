@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using RSSVibe.Data;
 using RSSVibe.Data.Entities;
 using RSSVibe.Services.Auth;
+using TickerQ.EntityFrameworkCore.DbContextFactory;
 using TUnit.Core.Interfaces;
 
 namespace RSSVibe.ApiService.Tests.Infrastructure;
@@ -36,8 +37,6 @@ public class TestApplication : WebApplicationFactory<Program>, IAsyncInitializer
 
     public async Task InitializeAsync()
     {
-        _ = Server;
-
         await using var scope = Server.Services.CreateAsyncScope();
 
         await ApplyDatabaseMigrationsAsync(scope);
@@ -51,6 +50,8 @@ public class TestApplication : WebApplicationFactory<Program>, IAsyncInitializer
     {
         await using var dbContext = scope.ServiceProvider.GetRequiredService<RssVibeDbContext>();
         await dbContext.Database.MigrateAsync();
+        await using var tickerQDbContext = scope.ServiceProvider.GetRequiredService<TickerQDbContext>();
+        await tickerQDbContext.Database.MigrateAsync();
     }
 
     /// <summary>
