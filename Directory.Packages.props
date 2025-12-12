@@ -46,7 +46,7 @@
     <PackageVersion Include="SharpGrip.FluentValidation.AutoValidation.Endpoints" Version="1.5.0" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.9.0" />
     <PackageVersion Include="TickerQ" Version="10.0.1" />
-    <PackageVersion Include="TickerQ.Dashboard" Version="10.0.1" />
+    <PackageVersion Include="TickerQ.Dashboard" Version="10.0.2" />
     <PackageVersion Include="TickerQ.EntityFrameworkCore" Version="10.0.1" />
     <PackageVersion Include="TickerQ.Instrumentation.OpenTelemetry" Version="10.0.1" />
     <PackageVersion Include="TUnit" Version="1.5.1" />
