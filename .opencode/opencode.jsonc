@@ -1,18 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "instructions": ["docs/agents/*.md"],
   "small_model": "github-copilot/grok-code-fast-1",
   "formatter": {
     "dotnet format": {
       "command": ["dotnet", "format", "--include", "$FILE"],
       "extensions": [".cs"]
     }
-  },
-  "keybinds": {
-    "messages_half_page_up": "ctrl+shift+up",
-    "messages_half_page_down": "ctrl+shift+down",
-    "history_previous": "up",
-    "history_next": "down"
   },
     "mcp": {
         "microsoft_docs_mcp": {

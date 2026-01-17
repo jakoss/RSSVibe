@@ -1,3 +1,8 @@
+---
+name: testing-standards
+description: Comprehensive testing guidance for RSSVibe project using TUnit framework, test organization, and HTTP client patterns. Use this skill when writing tests, running tests, or reviewing testing practices.
+---
+
 # Testing Standards
 
 **Framework**: TUnit

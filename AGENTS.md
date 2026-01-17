@@ -6,14 +6,7 @@
 
 ## DOCUMENTATION STRUCTURE
 
-This is the main reference guide. For specialized topics, see:
-
-- **[Testing Guide](docs/agents/testing-guide.md)** - General testing standards, TUnit patterns, best practices
-- **[Integration Testing](docs/agents/integration-testing.md)** - Endpoint testing, test infrastructure, scenarios
-- **[Entity Framework](docs/agents/entity-framework.md)** - EF Core patterns, migrations, JSON configuration
-- **[Architecture](docs/agents/architecture.md)** - Service layer, project responsibilities, dependency injection
-- **[API Design](docs/agents/api-design.md)** - Minimal APIs, hierarchical endpoints, TypedResults
-- **[Database](docs/agents/database.md)** - PostgreSQL performance and optimization patterns
+This is the main reference guide. For specialized topics, **use the skill system** to load detailed, task-specific guidance on-demand.
 
 ---
 
@@ -227,16 +220,4 @@ else
 
 ## SPECIALIZED TOPICS
 
-For detailed guidance on specific areas, consult these specialized guides:
-
-### Testing
-- **[Testing Guide](docs/agents/testing-guide.md)** - TUnit framework, assertion patterns, HTTP client helpers
-- **[Integration Testing](docs/agents/integration-testing.md)** - Test infrastructure, endpoint testing patterns, configuration testing
-
-### Data & Persistence
-- **[Entity Framework](docs/agents/entity-framework.md)** - Data access patterns, type-safe JSON, migrations
-- **[Database](docs/agents/database.md)** - PostgreSQL performance, indexing, query optimization
-
-### Architecture & API
-- **[Architecture](docs/agents/architecture.md)** - Service layer patterns, project responsibilities, DI
-- **[API Design](docs/agents/api-design.md)** - Minimal APIs, hierarchical endpoints, TypedResults
+For detailed guidance on specific areas, **use the skill system** to load comprehensive, task-specific documentation on-demand.
