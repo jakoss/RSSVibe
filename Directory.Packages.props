@@ -5,9 +5,9 @@
     <NoWarn>$(NoWarn);NU1507</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.0.2" />
-    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.0.2" />
-    <PackageVersion Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.0.2" />
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.1.0" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.1.0" />
+    <PackageVersion Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.1.0" />
     <PackageVersion Include="Aspire4Wasm.AppHost" Version="6.0.0" />
     <PackageVersion Include="Aspire4Wasm.WebApi" Version="6.0.1" />
     <PackageVersion Include="Aspire4Wasm.WebAssembly" Version="6.0.1" />
