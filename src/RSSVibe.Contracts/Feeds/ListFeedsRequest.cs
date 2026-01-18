@@ -35,7 +35,11 @@ public sealed record ListFeedsRequest(
                 .Must(s =>
                 {
                     var parts = s.Split(':');
-                    if (parts.Length != 2) return false;
+                    if (parts.Length != 2)
+                    {
+                        return false;
+                    }
+
                     return ValidSortFields.Contains(parts[0]) && ValidSortDirections.Contains(parts[1]);
                 })
                 .WithMessage("Sort must be in format 'field:direction' where field is 'createdAt', 'lastParsedAt', or 'title', and direction is 'asc' or 'desc'.");

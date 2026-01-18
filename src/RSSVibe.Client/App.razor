@@ -1,41 +1,44 @@
-﻿@using RSSVibe.Client.Services
+@using RSSVibe.Client.Services
+@using RSSVibe.Client.Components
 @using Blazored.LocalStorage
 @inject CustomAuthStateProvider AuthStateProvider
 @inject ILocalStorageService LocalStorage
 
 <CascadingAuthenticationState>
-    @if (_authStateLoaded)
-    {
-        <Router AppAssembly="@typeof(App).Assembly">
-            <Found Context="routeData">
-                <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
-                    <NotAuthorized>
-                        @if (context.User.Identity?.IsAuthenticated != true)
-                        {
-                            <RedirectToLogin />
-                        }
-                        else
-                        {
-                            <p>You are not authorized to access this resource.</p>
-                        }
-                    </NotAuthorized>
-                </AuthorizeRouteView>
-                <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
-            </Found>
-            <NotFound>
-                <PageTitle>Not found</PageTitle>
-                <LayoutView Layout="@typeof(MainLayout)">
-                    <p role="alert">Sorry, there's nothing at this address.</p>
-                </LayoutView>
-            </NotFound>
-        </Router>
-    }
-    else
-    {
-        <div style="display: flex; align-items: center; justify-content: center; height: 100vh;">
-            <p>Loading...</p>
-        </div>
-    }
+    <AppErrorBoundary>
+        @if (_authStateLoaded)
+        {
+            <Router AppAssembly="@typeof(App).Assembly">
+                <Found Context="routeData">
+                    <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                        <NotAuthorized>
+                            @if (context.User.Identity?.IsAuthenticated != true)
+                            {
+                                <RedirectToLogin />
+                            }
+                            else
+                            {
+                                <p>You are not authorized to access this resource.</p>
+                            }
+                        </NotAuthorized>
+                    </AuthorizeRouteView>
+                    <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
+                </Found>
+                <NotFound>
+                    <PageTitle>Not found</PageTitle>
+                    <LayoutView Layout="@typeof(MainLayout)">
+                        <p role="alert">Sorry, there's nothing at this address.</p>
+                    </LayoutView>
+                </NotFound>
+            </Router>
+        }
+        else
+        {
+            <div style="display: flex; align-items: center; justify-content: center; height: 100vh;">
+                <p>Loading...</p>
+            </div>
+        }
+    </AppErrorBoundary>
 </CascadingAuthenticationState>
 
 @code {

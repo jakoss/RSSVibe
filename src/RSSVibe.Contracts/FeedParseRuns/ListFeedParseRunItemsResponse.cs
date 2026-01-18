@@ -5,5 +5,5 @@ namespace RSSVibe.Contracts.FeedParseRuns;
 /// </summary>
 public sealed record ListFeedParseRunItemsResponse(
     FeedParseRunItemDto[] Items,
-    RSSVibe.Contracts.PagingDto Paging
+    PagingDto Paging
 );

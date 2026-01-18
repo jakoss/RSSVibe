@@ -18,16 +18,24 @@ public sealed record ApiResult<TData>
 public static class ApiResult
 {
     public static ApiResult<TData> Success<TData>(TData data, int statusCode = 200)
-        => new() { IsSuccess = true, Data = data, StatusCode = statusCode };
+    {
+        return new() { IsSuccess = true, Data = data, StatusCode = statusCode };
+    }
 
     public static ApiResult<TData> Failure<TData>(int statusCode, string? title = null, string? detail = null)
-        => new() { IsSuccess = false, StatusCode = statusCode, ErrorTitle = title, ErrorDetail = detail };
+    {
+        return new() { IsSuccess = false, StatusCode = statusCode, ErrorTitle = title, ErrorDetail = detail };
+    }
 
     public static ApiResultNoData Success(int statusCode = 204)
-        => new() { IsSuccess = true, StatusCode = statusCode };
+    {
+        return new() { IsSuccess = true, StatusCode = statusCode };
+    }
 
     public static ApiResultNoData Failure(int statusCode, string? title = null, string? detail = null)
-        => new() { IsSuccess = false, StatusCode = statusCode, ErrorTitle = title, ErrorDetail = detail };
+    {
+        return new() { IsSuccess = false, StatusCode = statusCode, ErrorTitle = title, ErrorDetail = detail };
+    }
 }
 
 /// <summary>

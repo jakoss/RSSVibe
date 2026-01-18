@@ -1,0 +1,74 @@
+@using Microsoft.AspNetCore.Components.Web
+@using MudBlazor
+@inject ILogger<AppErrorBoundary> Logger
+@inject ISnackbar Snackbar
+
+<ErrorBoundary @ref="_errorBoundary">
+    <ChildContent>
+        @ChildContent
+    </ChildContent>
+    <ErrorContent Context="exception">
+        <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+                <MudText Typo="Typo.h6">Something went wrong</MudText>
+                <MudText Typo="Typo.body2" Class="mt-2">
+                    We encountered an unexpected error. Please try again or contact support if the problem persists.
+                </MudText>
+                
+                @if (IsDevelopment())
+                {
+                    <MudText Typo="Typo.body2" Class="mt-4" Style="font-family: monospace; white-space: pre-wrap;">
+                        <strong>Error Details:</strong><br/>
+                        @exception.Message
+                        @if (!string.IsNullOrEmpty(exception.StackTrace))
+                        {
+                            <br/><br/>
+                            <strong>Stack Trace:</strong><br/>
+                            @exception.StackTrace
+                        }
+                    </MudText>
+                }
+                
+                <MudButton Variant="Variant.Outlined" 
+                          Color="Color.Default" 
+                          Class="mt-4"
+                          OnClick="Retry">
+                    Retry
+                </MudButton>
+            </MudAlert>
+        </MudContainer>
+    </ErrorContent>
+</ErrorBoundary>
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+    
+    private ErrorBoundary? _errorBoundary;
+    
+    protected override void OnParametersSet()
+    {
+        if (ChildContent == null)
+        {
+            throw new ArgumentNullException(nameof(ChildContent), "ChildContent is required");
+        }
+    }
+    
+    private bool IsDevelopment()
+    {
+        // In Blazor WASM, we can detect development mode by checking if the debugger is attached
+        // or by using a configuration value if available
+#if DEBUG
+        return true;
+#else
+        return false;
+#endif
+    }
+    
+    private void Retry()
+    {
+        _errorBoundary?.Recover();
+        Snackbar.Add("Retrying...", Severity.Info);
+        Logger.LogInformation("Error boundary recovered by user action");
+    }
+}

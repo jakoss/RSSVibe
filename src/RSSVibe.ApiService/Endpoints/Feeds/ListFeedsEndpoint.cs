@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
 using RSSVibe.Contracts.Feeds;
 using RSSVibe.Services.Feeds;
+using System.Security.Claims;
 
 namespace RSSVibe.ApiService.Endpoints.Feeds;
 
@@ -14,20 +14,20 @@ public static class ListFeedsEndpoint
     /// <summary>
     /// Maps the list feeds endpoint to the route group.
     /// </summary>
-     public static RouteGroupBuilder MapListFeedsEndpoint(this RouteGroupBuilder group)
-     {
-         group.MapGet("", HandleAsync)
-             .WithName("ListFeeds")
-             .WithSummary("List feeds")
-             .WithDescription("Retrieves a paginated list of feeds owned by the authenticated user with optional filtering and sorting.")
-             .Produces<ListFeedsResponse>()
-             .ProducesProblem(StatusCodes.Status400BadRequest)
-             .ProducesProblem(StatusCodes.Status401Unauthorized)
-             .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
-             .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+    public static RouteGroupBuilder MapListFeedsEndpoint(this RouteGroupBuilder group)
+    {
+        group.MapGet("", HandleAsync)
+            .WithName("ListFeeds")
+            .WithSummary("List feeds")
+            .WithDescription("Retrieves a paginated list of feeds owned by the authenticated user with optional filtering and sorting.")
+            .Produces<ListFeedsResponse>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
-         return group;
-     }
+        return group;
+    }
 
     /// <summary>
     /// Handles the list feeds request.
@@ -94,7 +94,7 @@ public static class ListFeedsEndpoint
 
         // Map to response
         var items = result.Items?.Select(MapToDto).ToArray() ?? [];
-        var paging = new RSSVibe.Contracts.PagingDto(
+        var paging = new Contracts.PagingDto(
             Skip: request.Skip,
             Take: request.Take,
             TotalCount: result.TotalCount,

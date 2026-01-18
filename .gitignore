@@ -67,3 +67,8 @@ nunit-*.xml
 **/.idea/**/protoeditor.xml
 **/.idea/**/copilot.data.migration.*.xml
 *.DotSettings.user
+
+# Act (local GitHub Actions runner)
+.act/
+.github/.env.act
+act-*.log

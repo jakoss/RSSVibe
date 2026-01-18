@@ -1,0 +1,48 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Build, Format, and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+      
+      - name: Restore dependencies
+        run: dotnet restore -p:ContinuousIntegrationBuild=true
+      
+      - name: Build solution
+        run: dotnet build -c Release --no-restore -p:ContinuousIntegrationBuild=true -p:TreatWarningsAsErrors=true
+      
+      - name: Verify code formatting
+        run: dotnet format --verify-no-changes --no-restore
+      
+      - name: Run tests
+        run: |
+          cd Tests/RSSVibe.ApiService.Tests
+          dotnet run -c Release --no-build -p:ContinuousIntegrationBuild=true -- --report-trx --report-trx-filename test-results.trx
+      
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: Tests/RSSVibe.ApiService.Tests/TestResults/*.trx
+          retention-days: 7

@@ -84,10 +84,7 @@ internal sealed class FeedAnalysisService(
                     .Where(a => a.Id == existingAnalysis.Id)
                     .FirstOrDefaultAsync(cancellationToken);
 
-                if (existingEntity is not null)
-                {
-                    existingEntity.AnalysisStatus = (FeedAnalysisStatus)Contracts.FeedAnalyses.FeedAnalysisStatus.Superseded;
-                }
+                existingEntity?.AnalysisStatus = (FeedAnalysisStatus)Contracts.FeedAnalyses.FeedAnalysisStatus.Superseded;
             }
 
             // Perform synchronous preflight checks

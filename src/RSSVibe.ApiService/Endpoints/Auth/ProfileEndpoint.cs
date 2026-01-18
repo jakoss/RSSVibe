@@ -13,22 +13,22 @@ public static class ProfileEndpoint
     /// <summary>
     /// Maps the profile endpoint to the route group.
     /// </summary>
-     public static RouteGroupBuilder MapProfileEndpoint(this RouteGroupBuilder group)
-     {
-         group.MapGet("/profile", HandleAsync)
-             .WithName("GetUserProfile")
-             .WithSummary("Get current user profile")
-             .WithDescription("""
+    public static RouteGroupBuilder MapProfileEndpoint(this RouteGroupBuilder group)
+    {
+        group.MapGet("/profile", HandleAsync)
+            .WithName("GetUserProfile")
+            .WithSummary("Get current user profile")
+            .WithDescription("""
                  Retrieves the authenticated user's profile including email, display name, 
                  roles, and security posture metadata. Requires valid JWT authentication token.
                  """)
-             .RequireAuthorization()
-             .Produces<ProfileResponse>()
-             .ProducesProblem(StatusCodes.Status401Unauthorized)
-             .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+            .RequireAuthorization()
+            .Produces<ProfileResponse>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
-         return group;
-     }
+        return group;
+    }
 
     private static async Task<Results<
         Ok<ProfileResponse>,

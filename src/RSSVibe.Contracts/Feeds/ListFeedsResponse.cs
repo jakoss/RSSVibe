@@ -5,5 +5,5 @@ namespace RSSVibe.Contracts.Feeds;
 /// </summary>
 public sealed record ListFeedsResponse(
     IReadOnlyList<FeedListItemDto> Items,
-    RSSVibe.Contracts.PagingDto Paging
+    PagingDto Paging
 );

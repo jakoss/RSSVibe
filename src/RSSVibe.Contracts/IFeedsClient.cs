@@ -1,5 +1,5 @@
-using RSSVibe.Contracts.Feeds;
 using RSSVibe.Contracts.FeedItems;
+using RSSVibe.Contracts.Feeds;
 
 namespace RSSVibe.Contracts;
 

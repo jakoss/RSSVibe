@@ -53,7 +53,7 @@ public static class Extensions
             logging.IncludeFormattedMessage = true;
             logging.IncludeScopes = true;
         });
-        
+
         builder.Services.AddOpenTelemetry()
             .WithMetrics(metrics =>
             {

@@ -96,7 +96,7 @@ public sealed class CustomAuthStateProvider(IServiceProvider serviceProvider) : 
                     DisplayName = profile.DisplayName,
                     Email = profile.Email,
                     MustChangePassword = profile.MustChangePassword,
-                    Roles = profile.Roles.ToList(),
+                    Roles = [.. profile.Roles],
                     CachedAt = DateTime.UtcNow,
                     CacheDurationMinutes = 60
                 };

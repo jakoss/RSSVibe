@@ -1,11 +1,11 @@
-using System.Net;
-using System.Net.Http.Json;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using RSSVibe.Contracts.Feeds;
 using RSSVibe.Data;
 using RSSVibe.Data.Entities;
 using RSSVibe.Data.Models;
+using System.Net;
+using System.Net.Http.Json;
 
 namespace RSSVibe.ApiService.Tests.Endpoints.Feeds;
 
@@ -292,7 +292,7 @@ public class ListFeedsEndpointTests : TestsBase
         var client = CreateAuthenticatedClient();
 
         // Create 5 test feeds
-        for (int i = 1; i <= 5; i++)
+        for (var i = 1; i <= 5; i++)
         {
             _ = await CreateTestFeedAsync($"Feed {i}", $"https://feed{i}{Guid.CreateVersion7():N}.com/rss.xml");
         }
@@ -529,7 +529,7 @@ public class ListFeedsEndpointTests : TestsBase
         var feedIds = responseData.Items.Select(f => f.FeedId).ToList();
         await Assert.That(feedIds).Contains(urgentFeed.Id);
     }
-    
+
     /// <summary>
     /// Creates a test feed directly in the database for the test user.
     /// </summary>
