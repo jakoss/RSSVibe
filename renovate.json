@@ -8,6 +8,7 @@
       "groupName": "tickerq dependencies",
       "groupSlug": "tickerq",
       "matchPackageNames": [
+        "TickerQ",
         "TickerQ.{/,}**"
       ]
     },
