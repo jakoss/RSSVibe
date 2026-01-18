@@ -1,13 +1,13 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: rssvibe-docker-postgres
+    container_name: rssvibe-local-postgres
     environment:
       POSTGRES_DB: rssvibe
       POSTGRES_USER: rssvibe
       POSTGRES_PASSWORD: dev123
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -17,8 +17,10 @@ services:
       retries: 5
 
   migration:
-    image: ghcr.io/jakoss/rssvibe-migrationservice:latest
-    container_name: rssvibe-docker-migration
+    build:
+      context: .
+      dockerfile: src/RSSVibe.MigrationService/Dockerfile
+    container_name: rssvibe-local-migration
     environment:
       ConnectionStrings__rssvibedb: "Host=postgres;Database=rssvibe;Username=rssvibe;Password=dev123"
     depends_on:
@@ -27,8 +29,10 @@ services:
     restart: "no"
 
   api:
-    image: ghcr.io/jakoss/rssvibe-apiservice:latest
-    container_name: rssvibe-docker-api
+    build:
+      context: .
+      dockerfile: src/RSSVibe.ApiService/Dockerfile
+    container_name: rssvibe-local-api
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
       ConnectionStrings__rssvibedb: "Host=postgres;Database=rssvibe;Username=rssvibe;Password=dev123"
@@ -38,7 +42,7 @@ services:
       Jwt__AccessTokenExpirationMinutes: "60"
       Jwt__Cookie__RequireSecure: "false"
       Jwt__Cookie__SameSite: "Lax"
-      Cors__AllowedOrigins__0: "http://localhost:81"
+      Cors__AllowedOrigins__0: "http://localhost:82"
     depends_on:
       postgres:
         condition: service_healthy
@@ -52,12 +56,14 @@ services:
       start_period: 40s
 
   client:
-    image: ghcr.io/jakoss/rssvibe-client:latest
-    container_name: rssvibe-docker-client
+    build:
+      context: .
+      dockerfile: src/RSSVibe.Client/Dockerfile
+    container_name: rssvibe-local-client
     environment:
-      API_BASE_URL: http://localhost:81/api
+      API_BASE_URL: http://localhost:82/api
     ports:
-      - "81:80"
+      - "82:80"
     depends_on:
       api:
         condition: service_healthy
@@ -69,4 +75,4 @@ services:
 
 volumes:
   postgres-data:
-    name: rssvibe-docker-postgres-data
+    name: rssvibe-local-postgres-data

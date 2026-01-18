@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.Options;
 using RSSVibe.Contracts.Auth;
 using RSSVibe.Services.Auth;
 
@@ -40,6 +41,7 @@ public static class LoginEndpoint
             HttpContext httpContext,
             IHostEnvironment environment,
             ILoggerFactory loggerFactory,
+            IOptions<JwtConfiguration> jwtConfig,
             CancellationToken cancellationToken)
     {
         // Map request to command
@@ -96,12 +98,10 @@ public static class LoginEndpoint
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = isSecure,
-                // Use SameSite=None to allow cookies to be sent from WASM frontend to backend API
-                // (different origins). This is safe with HttpOnly + Secure flags + CORS credentials.
-                SameSite = SameSiteMode.None,
+                Secure = jwtConfig.Value.Cookie.RequireSecure && isSecure,
+                SameSite = jwtConfig.Value.Cookie.SameSite,
                 // Set domain explicitly so cookies work across ports (localhost:3000 → localhost:5000)
-                Domain = hostWithoutPort,
+                Domain = jwtConfig.Value.Cookie.Domain ?? hostWithoutPort,
                 Expires = DateTimeOffset.UtcNow.AddSeconds(result.ExpiresInSeconds)
             };
 
@@ -111,9 +111,9 @@ public static class LoginEndpoint
             var refreshCookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = isSecure,
-                SameSite = SameSiteMode.None,
-                Domain = hostWithoutPort,
+                Secure = jwtConfig.Value.Cookie.RequireSecure && isSecure,
+                SameSite = jwtConfig.Value.Cookie.SameSite,
+                Domain = jwtConfig.Value.Cookie.Domain ?? hostWithoutPort,
                 Expires = DateTimeOffset.UtcNow.AddDays(request.RememberMe ? 30 : 7)
             };
 

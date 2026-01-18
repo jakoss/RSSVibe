@@ -26,7 +26,7 @@ RUN dotnet publish src/RSSVibe.MigrationService/RSSVibe.MigrationService.csproj 
     -p:ContinuousIntegrationBuild=true
 
 # Stage 2: Runtime
-FROM mcr.microsoft.com/dotnet/runtime:10.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
 # Copy published output from build stage
