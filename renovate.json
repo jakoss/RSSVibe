@@ -7,15 +7,15 @@
     {
       "groupName": "tickerq dependencies",
       "groupSlug": "tickerq",
-      "matchPackagePrefixes": [
-        "TickerQ."
+      "matchPackageNames": [
+        "TickerQ.{/,}**"
       ]
     },
     {
       "groupName": "aspire dependencies",
       "groupSlug": "aspire",
-      "matchPackagePatterns": [
-        "(?i).*aspire.*"
+      "matchPackageNames": [
+        "/(?i).*aspire.*/"
       ]
     }
   ]
