@@ -7,16 +7,16 @@ namespace RSSVibe.ApiService.Endpoints.FeedAnalyses;
 
 public static class ListFeedAnalysesEndpoint
 {
-     public static RouteGroupBuilder MapListFeedAnalysesEndpoint(this RouteGroupBuilder group)
-     {
-         group.MapGet("/", HandleAsync)
-             .WithName("ListFeedAnalyses")
-             .WithSummary("List feed analyses for current user")
-             .WithDescription("Returns paginated list of feed analyses with filtering, sorting, and search capabilities.")
-             .RequireAuthorization();
+    public static RouteGroupBuilder MapListFeedAnalysesEndpoint(this RouteGroupBuilder group)
+    {
+        group.MapGet("/", HandleAsync)
+            .WithName("ListFeedAnalyses")
+            .WithSummary("List feed analyses for current user")
+            .WithDescription("Returns paginated list of feed analyses with filtering, sorting, and search capabilities.")
+            .RequireAuthorization();
 
-         return group;
-     }
+        return group;
+    }
 
     private static async Task<Results<Ok<ListFeedAnalysesResponse>, ProblemHttpResult, UnauthorizedHttpResult>> HandleAsync(
         ClaimsPrincipal user,
@@ -60,7 +60,7 @@ public static class ListFeedAnalysesEndpoint
                     i.AnalysisStartedAt,
                     i.AnalysisCompletedAt
                 ))],
-            Paging: new RSSVibe.Contracts.PagingDto(
+            Paging: new Contracts.PagingDto(
                 result.Paging.Skip,
                 result.Paging.Take,
                 result.Paging.TotalCount,

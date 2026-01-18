@@ -368,6 +368,9 @@ resharper_entity_framework_model_validation_unlimited_string_length_highlighting
 [**/Migrations/**]
 generated_code = true
 
+[**/TickerQMigrations/**]
+generated_code = true
+
 # Specific rules for Mapper classes
 [*Mapper.cs]
 # Workaround for dotnet format bug: https://github.com/dotnet/roslyn/issues/75700

@@ -21,10 +21,10 @@ public sealed record DashboardData(
     /// <summary>
     /// Recent feed items across all feeds for activity feed.
     /// </summary>
-    IReadOnlyList<Dashboard.RecentFeedItem> RecentItems,
+    IReadOnlyList<RecentFeedItem> RecentItems,
 
     /// <summary>
     /// Pre-calculated aggregated metrics for statistic cards.
     /// </summary>
-    Dashboard.DashboardStatistics Statistics
+    DashboardStatistics Statistics
 );

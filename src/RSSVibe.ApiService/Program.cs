@@ -22,7 +22,6 @@ using TickerQ.DependencyInjection;
 using TickerQ.EntityFrameworkCore.DbContextFactory;
 using TickerQ.EntityFrameworkCore.DependencyInjection;
 using TickerQ.Instrumentation.OpenTelemetry;
-using TickerQ.Utilities.Enums;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -147,7 +146,7 @@ builder.Services.AddTickerQ(options =>
         scheduler.MaxConcurrency = 10;
         scheduler.SchedulerTimeZone = TimeZoneInfo.Utc;
     });
-    
+
     options.AddOpenTelemetryInstrumentation();
     options.AddOperationalStore(storeBuilder =>
     {
@@ -227,7 +226,7 @@ if (!app.Environment.IsIntegrationTests())
 {
     // Do not start TickerQ in integration tests
     app.UseTickerQ();
-    
+
     // Create test user
     // TODO: Parametrize this in the future
     using var scope = app.Services.CreateScope();

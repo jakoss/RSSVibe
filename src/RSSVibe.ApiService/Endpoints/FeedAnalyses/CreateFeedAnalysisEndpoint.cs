@@ -14,20 +14,20 @@ public static class CreateFeedAnalysisEndpoint
     /// <summary>
     /// Maps the POST /feed-analyses endpoint to the handler.
     /// </summary>
-     public static RouteGroupBuilder MapCreateFeedAnalysisEndpoint(
-         this RouteGroupBuilder group)
-     {
-         group.MapPost("/", HandleAsync)
-             .WithName("CreateFeedAnalysis")
-             .WithSummary("Create a new feed analysis")
-             .WithDescription("""
+    public static RouteGroupBuilder MapCreateFeedAnalysisEndpoint(
+        this RouteGroupBuilder group)
+    {
+        group.MapPost("/", HandleAsync)
+            .WithName("CreateFeedAnalysis")
+            .WithSummary("Create a new feed analysis")
+            .WithDescription("""
                  Initiates AI-powered analysis and preflight checks for a submitted URL. 
                  Returns immediately with 202 Accepted and provides location header for polling.
                  """)
-             .RequireAuthorization();
+            .RequireAuthorization();
 
-         return group;
-     }
+        return group;
+    }
 
     /// <summary>
     /// Handles the feed analysis creation request.

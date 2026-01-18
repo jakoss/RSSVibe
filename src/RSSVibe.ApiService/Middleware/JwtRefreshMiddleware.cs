@@ -1,6 +1,6 @@
-using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Options;
 using RSSVibe.Services.Auth;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace RSSVibe.ApiService.Middleware;
 

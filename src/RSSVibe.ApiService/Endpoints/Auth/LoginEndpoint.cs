@@ -12,24 +12,24 @@ public static class LoginEndpoint
     /// <summary>
     /// Maps the login endpoint to the route group.
     /// </summary>
-     public static RouteGroupBuilder MapLoginEndpoint(this RouteGroupBuilder group)
-     {
-         group.MapPost("/login", HandleAsync)
-             .WithName("Login")
-             .WithSummary("Authenticate user credentials")
-             .WithDescription("""
+    public static RouteGroupBuilder MapLoginEndpoint(this RouteGroupBuilder group)
+    {
+        group.MapPost("/login", HandleAsync)
+            .WithName("Login")
+            .WithSummary("Authenticate user credentials")
+            .WithDescription("""
                  Authenticates user with email and password. 
                  Returns JWT access token and refresh token for subsequent API calls. 
                  Supports 'remember me' to extend refresh token lifetime to 30 days.
                  """)
-             .Produces<LoginResponse>()
-             .ProducesProblem(StatusCodes.Status400BadRequest)
-             .ProducesProblem(StatusCodes.Status401Unauthorized)
-             .ProducesProblem(StatusCodes.Status423Locked)
-             .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+            .Produces<LoginResponse>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status423Locked)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
-         return group;
-     }
+        return group;
+    }
 
     private static async Task<Results<
         Ok<LoginResponse>,

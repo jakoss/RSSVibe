@@ -1,6 +1,6 @@
 @if (Items?.Count > 0)
 {
-    <MudList T="RecentFeedItem" Dense="true" Clickable="false" DisableGutters="true">
+    <MudList T="RecentFeedItem" Dense="true">
         @{
             var itemsToDisplay = Items.Take(MaxItems).ToList();
         }

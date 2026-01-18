@@ -1,0 +1,46 @@
+# Version control
+**/.git
+**/.github
+**/.gitattributes
+**/.gitignore
+
+# IDE and editors
+**/.vs
+**/.vscode
+**/.idea
+**/.opencode
+**/.claude
+**/.ai
+**/.editorconfig
+**/*.user
+**/*.suo
+**/*.sln.docstates
+
+# Build outputs
+**/bin
+**/obj
+**/out
+**/TestResults
+
+# Dependencies
+**/node_modules
+**/packages
+
+# Test projects
+Tests/
+
+# Documentation
+*.md
+README.md
+LICENSE
+
+# OS files
+**/.DS_Store
+**/Thumbs.db
+
+# Act (local GitHub Actions)
+.act/
+act-*.log
+
+# Don't ignore appsettings - needed during build
+!**/appsettings*.json

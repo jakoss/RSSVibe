@@ -13,22 +13,22 @@ public static class ChangePasswordEndpoint
     /// <summary>
     /// Maps the change password endpoint to the route group.
     /// </summary>
-     public static RouteGroupBuilder MapChangePasswordEndpoint(this RouteGroupBuilder group)
-     {
-         group.MapPost("/change-password", HandleAsync)
-             .WithName("ChangePassword")
-             .WithSummary("Change user password")
-             .WithDescription("Changes the authenticated user's password after verifying the current password. Revokes all existing refresh tokens for security.")
-             .RequireAuthorization()
-             .RequireRateLimiting("password-change")
-             .Produces(StatusCodes.Status204NoContent)
-             .ProducesProblem(StatusCodes.Status400BadRequest)
-             .ProducesProblem(StatusCodes.Status401Unauthorized)
-             .ProducesProblem(StatusCodes.Status429TooManyRequests)
-             .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+    public static RouteGroupBuilder MapChangePasswordEndpoint(this RouteGroupBuilder group)
+    {
+        group.MapPost("/change-password", HandleAsync)
+            .WithName("ChangePassword")
+            .WithSummary("Change user password")
+            .WithDescription("Changes the authenticated user's password after verifying the current password. Revokes all existing refresh tokens for security.")
+            .RequireAuthorization()
+            .RequireRateLimiting("password-change")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
-         return group;
-     }
+        return group;
+    }
 
     /// <summary>
     /// Handles the change password request.

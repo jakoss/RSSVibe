@@ -31,7 +31,18 @@ builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredServ
 // Register access token provider for API authentication
 builder.Services.AddScoped<IAccessTokenProvider, ClientAccessTokenProvider>();
 
-// Register API client with automatic token injection
-builder.Services.AddRSSVibeApiClient("https+http://apiservice");
+// Register API client with configured URL or fallback to Aspire service discovery
+var apiBaseUrl = builder.Configuration["ApiBaseUrl"];
+
+if (!string.IsNullOrWhiteSpace(apiBaseUrl))
+{
+    // Docker/Production: Use configured API URL
+    builder.Services.AddRSSVibeApiClient(apiBaseUrl);
+}
+else
+{
+    // Local Development: Use Aspire service discovery
+    builder.Services.AddRSSVibeApiClient("https+http://apiservice");
+}
 
 await builder.Build().RunAsync();

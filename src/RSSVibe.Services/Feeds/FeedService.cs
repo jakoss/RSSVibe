@@ -102,13 +102,13 @@ internal sealed class FeedService(RssVibeDbContext dbContext) : IFeedService
     {
         return sortField.ToLowerInvariant() switch
         {
-            "createdat" => sortDirection.Equals("desc" , StringComparison.OrdinalIgnoreCase)
+            "createdat" => sortDirection.Equals("desc", StringComparison.OrdinalIgnoreCase)
                 ? query.OrderByDescending(f => f.CreatedAt)
                 : query.OrderBy(f => f.CreatedAt),
-            "lastparsedat" => sortDirection.Equals("desc" , StringComparison.OrdinalIgnoreCase)
+            "lastparsedat" => sortDirection.Equals("desc", StringComparison.OrdinalIgnoreCase)
                 ? query.OrderByDescending(f => f.LastParsedAt)
                 : query.OrderBy(f => f.LastParsedAt),
-            "title" => sortDirection.Equals("desc" , StringComparison.OrdinalIgnoreCase)
+            "title" => sortDirection.Equals("desc", StringComparison.OrdinalIgnoreCase)
                 ? query.OrderByDescending(f => f.Title)
                 : query.OrderBy(f => f.Title),
             _ => query.OrderByDescending(f => f.LastParsedAt) // Default

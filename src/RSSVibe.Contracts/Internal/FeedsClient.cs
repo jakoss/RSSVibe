@@ -1,5 +1,5 @@
-using RSSVibe.Contracts.Feeds;
 using RSSVibe.Contracts.FeedItems;
+using RSSVibe.Contracts.Feeds;
 using System.Net.Http.Json;
 
 namespace RSSVibe.Contracts.Internal;
