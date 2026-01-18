@@ -33,7 +33,7 @@ COPY src/RSSVibe.Client/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 # Remove development appsettings (we'll generate production one at runtime)
-RUN rm -f appsettings.Development.json appsettings.json
+RUN rm -f appsettings.Development.json* appsettings.json*
 
 EXPOSE 80
 

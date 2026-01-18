@@ -27,6 +27,15 @@ cat > /usr/share/nginx/html/appsettings.json <<EOF
 }
 EOF
 
+# Create compressed versions for nginx (if gzip/brotli are available)
+if command -v gzip > /dev/null; then
+    gzip -k -f /usr/share/nginx/html/appsettings.json
+fi
+
+if command -v brotli > /dev/null; then
+    brotli -k -f /usr/share/nginx/html/appsettings.json
+fi
+
 echo "✓ Configuration generated successfully"
 echo "  API Base URL: ${API_BASE_URL}"
 

@@ -39,9 +39,21 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        var clients = builder.Configuration.GetServiceEndpoints("frontend");
-
-        policy.WithOrigins(clients);
+        // Try to get allowed origins from configuration (Docker/Production)
+        var configuredOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+        
+        if (configuredOrigins is { Length: > 0 })
+        {
+            // Docker/Production: Use configured origins
+            policy.WithOrigins(configuredOrigins);
+        }
+        else
+        {
+            // Local Development: Use Aspire service discovery
+            var clients = builder.Configuration.GetServiceEndpoints("frontend");
+            policy.WithOrigins(clients);
+        }
+        
         policy.AllowAnyMethod();
         policy.AllowAnyHeader();
         // AllowCredentials is required for cookie-based authentication
