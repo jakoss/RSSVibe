@@ -41,7 +41,7 @@ builder.Services.AddCors(options =>
     {
         // Try to get allowed origins from configuration (Docker/Production)
         var configuredOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
-        
+
         if (configuredOrigins is { Length: > 0 })
         {
             // Docker/Production: Use configured origins
@@ -53,7 +53,7 @@ builder.Services.AddCors(options =>
             var clients = builder.Configuration.GetServiceEndpoints("frontend");
             policy.WithOrigins(clients);
         }
-        
+
         policy.AllowAnyMethod();
         policy.AllowAnyHeader();
         // AllowCredentials is required for cookie-based authentication
