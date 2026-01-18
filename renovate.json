@@ -2,5 +2,21 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "groupName": "tickerq dependencies",
+      "groupSlug": "tickerq",
+      "matchPackagePrefixes": [
+        "TickerQ."
+      ]
+    },
+    {
+      "groupName": "aspire dependencies",
+      "groupSlug": "aspire",
+      "matchPackagePatterns": [
+        "(?i).*aspire.*"
+      ]
+    }
   ]
 }
