@@ -42,10 +42,7 @@ services:
       Jwt__AccessTokenExpirationMinutes: "60"
       Jwt__Cookie__RequireSecure: "false"
       Jwt__Cookie__SameSite: "Lax"
-      Cors__AllowedOrigins__0: "http://localhost:8082"
-      Cors__AllowedOrigins__1: "http://localhost:82"
-    ports:
-      - "8082:8080"
+      Cors__AllowedOrigins__0: "http://localhost:82"
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,7 +61,7 @@ services:
       dockerfile: src/RSSVibe.Client/Dockerfile
     container_name: rssvibe-local-client
     environment:
-      API_BASE_URL: http://localhost:8082
+      API_BASE_URL: http://localhost:82/api
     ports:
       - "82:80"
     depends_on:

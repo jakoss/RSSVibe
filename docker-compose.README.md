@@ -8,7 +8,6 @@ This project provides two Docker Compose configurations for different use cases.
 Uses pre-built images from GitHub Container Registry.
 
 **Ports:**
-- API: `http://localhost:8081`
 - Client: `http://localhost:81`
 - PostgreSQL: `localhost:5433`
 
@@ -35,8 +34,8 @@ docker compose logs -f
 
 **Access:**
 - Client: http://localhost:81
-- API: http://localhost:8081
-- API Documentation: http://localhost:8081/scalar/v1
+- API (proxied): http://localhost:81/api
+- API Documentation: http://localhost:81/api/scalar/v1
 
 ---
 
@@ -44,7 +43,6 @@ docker compose logs -f
 Builds images locally from source code.
 
 **Ports:**
-- API: `http://localhost:8082`
 - Client: `http://localhost:82`
 - PostgreSQL: `localhost:5434`
 
@@ -74,8 +72,8 @@ docker compose -f docker-compose.local.yml up -d --build api
 
 **Access:**
 - Client: http://localhost:82
-- API: http://localhost:8082
-- API Documentation: http://localhost:8082/scalar/v1
+- API (proxied): http://localhost:82/api
+- API Documentation: http://localhost:82/api/scalar/v1
 
 ---
 
@@ -93,7 +91,7 @@ Both configurations create a test user automatically:
 | Service    | Aspire (Default) | Production (base) | Local Development |
 |------------|------------------|-------------------|-------------------|
 | Client     | :80              | :81               | :82               |
-| API        | :8080            | :8081             | :8082             |
+| API        | :8080            | :81 (proxy `/api`) | :82 (proxy `/api`) |
 | PostgreSQL | :5432            | :5433             | :5434             |
 
 **Note:** All three configurations use different ports so you can run Aspire, production, and local Docker Compose simultaneously without conflicts!
@@ -146,7 +144,7 @@ docker compose -f docker-compose.local.yml logs -f api
 docker compose logs
 
 # Ensure no port conflicts
-lsof -i :8080 -i :8081 -i :8082 -i :80 -i :81 -i :82 -i :5432 -i :5433 -i :5434
+lsof -i :8080 -i :80 -i :81 -i :82 -i :5432 -i :5433 -i :5434
 
 # Clean up and restart
 docker compose down -v
