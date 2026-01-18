@@ -72,3 +72,4 @@ nunit-*.xml
 .act/
 .github/.env.act
 act-*.log
+dockmate-debug.log
