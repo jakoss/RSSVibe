@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy solution-level configuration files
-COPY Directory.Build.props Directory.Packages.props global.json ./
+COPY Directory.Build.props Directory.Packages.props global.json .editorconfig ./
 
 # Copy all source projects (required for project references)
 COPY src/ ./src/
