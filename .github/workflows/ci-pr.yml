@@ -36,11 +36,24 @@ jobs:
         run: |
           cd Tests/RSSVibe.ApiService.Tests
           dotnet run -c Release --no-build -p:ContinuousIntegrationBuild=true -- --report-trx --report-trx-filename test-results.trx
+          
+      - name: Restore tools
+        run: dotnet tool restore
+        
+      - name: Convert test results to CTRF
+        run: dotnet tool run DotnetCtrfJsonReporter -t "Tests/RSSVibe.ApiService.Tests/bin/Release/net10.0/TestResults/test-results.trx"
+        
+      - name: Publish Test Report
+        uses: ctrf-io/github-test-reporter@v1
+        with:
+          report-path: './ctrf/ctrf-report.json'
+          github-report: true
+        if: always()
       
       - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@v6
         with:
           name: test-results
-          path: Tests/RSSVibe.ApiService.Tests/TestResults/*.trx
+          path: Tests/RSSVibe.ApiService.Tests/bin/Release/net10.0/TestResults/test-results.trx
           retention-days: 7

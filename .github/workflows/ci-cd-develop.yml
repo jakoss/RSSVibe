@@ -42,7 +42,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: test-results
-          path: Tests/RSSVibe.ApiService.Tests/TestResults/*.trx
+          path: Tests/RSSVibe.ApiService.Tests/bin/Release/net10.0/TestResults/test-results.trx
           retention-days: 7
 
   docker:
