@@ -138,6 +138,145 @@ public class ListFeedAnalysesEndpointTests : TestsBase
     }
 
     [Test]
+    public async Task ListFeedAnalyses_WithStatusFilter_Pending_ShouldReturnOnlyPendingAnalyses()
+    {
+        // Arrange
+        var client = CreateAuthenticatedClient();
+
+        await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<RssVibeDbContext>();
+        var userId = WebApplicationFactory.TestUser.Id;
+
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        dbContext.FeedAnalyses.AddRange(
+            new FeedAnalysis
+            {
+                Id = Guid.CreateVersion7(),
+                UserId = userId,
+                TargetUrl = $"https://pending-filter-test-{timestamp}.example.com/pending",
+                NormalizedUrl = $"https://pending-filter-test-{timestamp}.example.com/pending",
+                AnalysisStatus = Data.Entities.FeedAnalysisStatus.Pending,
+                PreflightDetails = new DataModels.FeedPreflightDetails
+                {
+                    RequiresJavascript = false,
+                    RequiresAuthentication = false,
+                    IsPaywalled = false,
+                    HasInvalidMarkup = false,
+                    IsRateLimited = false,
+                    ErrorMessage = null,
+                    AdditionalInfo = "{}"
+                },
+                Selectors = new DataModels.FeedSelectors(),
+                CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-10),
+                UpdatedAt = DateTimeOffset.UtcNow.AddMinutes(-5)
+            },
+            new FeedAnalysis
+            {
+                Id = Guid.CreateVersion7(),
+                UserId = userId,
+                TargetUrl = $"https://pending-filter-test-{timestamp}.example.com/completed",
+                NormalizedUrl = $"https://pending-filter-test-{timestamp}.example.com/completed",
+                AnalysisStatus = Data.Entities.FeedAnalysisStatus.Completed,
+                PreflightDetails = new DataModels.FeedPreflightDetails
+                {
+                    RequiresJavascript = false,
+                    RequiresAuthentication = false,
+                    IsPaywalled = false,
+                    HasInvalidMarkup = false,
+                    IsRateLimited = false,
+                    ErrorMessage = null,
+                    AdditionalInfo = "{}"
+                },
+                Selectors = new DataModels.FeedSelectors(),
+                CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-9),
+                UpdatedAt = DateTimeOffset.UtcNow.AddMinutes(-4)
+            }
+        );
+
+        await dbContext.SaveChangesAsync();
+
+        // Act
+        var response = await client.GetAsync(_endpointUrl + "?status=Pending&skip=0&take=20");
+        var data = await response.Content.ReadFromJsonAsync<ListFeedAnalysesResponse>();
+
+        // Assert
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        await Assert.That(data).IsNotNull();
+        await Assert.That(data!.Items).IsNotEmpty();
+        await Assert.That(data.Items.All(i => i.Status == "pending")).IsTrue();
+    }
+
+    [Test]
+    public async Task ListFeedAnalyses_WithStatusFilter_InProgress_ShouldReturnOnlyInProgressAnalyses()
+    {
+        // Arrange
+        var client = CreateAuthenticatedClient();
+
+        await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<RssVibeDbContext>();
+        var userId = WebApplicationFactory.TestUser.Id;
+
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        dbContext.FeedAnalyses.AddRange(
+            new FeedAnalysis
+            {
+                Id = Guid.CreateVersion7(),
+                UserId = userId,
+                TargetUrl = $"https://inprogress-filter-test-{timestamp}.example.com/inprogress",
+                NormalizedUrl = $"https://inprogress-filter-test-{timestamp}.example.com/inprogress",
+                AnalysisStatus = Data.Entities.FeedAnalysisStatus.InProgress,
+                PreflightDetails = new DataModels.FeedPreflightDetails
+                {
+                    RequiresJavascript = false,
+                    RequiresAuthentication = false,
+                    IsPaywalled = false,
+                    HasInvalidMarkup = false,
+                    IsRateLimited = false,
+                    ErrorMessage = null,
+                    AdditionalInfo = "{}"
+                },
+                Selectors = new DataModels.FeedSelectors(),
+                AnalysisStartedAt = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+                UpdatedAt = DateTimeOffset.UtcNow
+            },
+            new FeedAnalysis
+            {
+                Id = Guid.CreateVersion7(),
+                UserId = userId,
+                TargetUrl = $"https://inprogress-filter-test-{timestamp}.example.com/pending",
+                NormalizedUrl = $"https://inprogress-filter-test-{timestamp}.example.com/pending",
+                AnalysisStatus = Data.Entities.FeedAnalysisStatus.Pending,
+                PreflightDetails = new DataModels.FeedPreflightDetails
+                {
+                    RequiresJavascript = false,
+                    RequiresAuthentication = false,
+                    IsPaywalled = false,
+                    HasInvalidMarkup = false,
+                    IsRateLimited = false,
+                    ErrorMessage = null,
+                    AdditionalInfo = "{}"
+                },
+                Selectors = new DataModels.FeedSelectors(),
+                CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-10),
+                UpdatedAt = DateTimeOffset.UtcNow
+            }
+        );
+
+        await dbContext.SaveChangesAsync();
+
+        // Act
+        var response = await client.GetAsync(_endpointUrl + "?status=InProgress&skip=0&take=20");
+        var data = await response.Content.ReadFromJsonAsync<ListFeedAnalysesResponse>();
+
+        // Assert
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        await Assert.That(data).IsNotNull();
+        await Assert.That(data!.Items).IsNotEmpty();
+        await Assert.That(data.Items.All(i => i.Status == "inprogress")).IsTrue();
+    }
+
+    [Test]
     public async Task ListFeedAnalyses_WithSearchTerm_ShouldReturnMatchingResults()
     {
         // Arrange
@@ -376,6 +515,19 @@ public class ListFeedAnalysesEndpointTests : TestsBase
 
         // Act
         var response = await client.GetAsync(_endpointUrl + "?search=&skip=0&take=20");
+
+        // Assert
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
+    public async Task ListFeedAnalyses_WithInvalidStatus_ShouldReturnValidationError()
+    {
+        // Arrange
+        var client = CreateAuthenticatedClient();
+
+        // Act
+        var response = await client.GetAsync(_endpointUrl + "?status=InvalidStatus&skip=0&take=20");
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
