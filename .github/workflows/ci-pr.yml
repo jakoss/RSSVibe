@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
+  checks: write
 
 jobs:
   validate:
@@ -17,11 +19,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-      
+
       - name: Setup .NET 10
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '10.0.x'
+          global-json-file: global.json
       
       - name: Restore dependencies
         run: dotnet restore -p:ContinuousIntegrationBuild=true
@@ -36,11 +38,31 @@ jobs:
         run: |
           cd Tests/RSSVibe.ApiService.Tests
           dotnet run -c Release --no-build -p:ContinuousIntegrationBuild=true -- --report-trx --report-trx-filename test-results.trx
+          
+      - name: Restore tools
+        run: dotnet tool restore
+        if: always()
+        
+      - name: Convert test results to CTRF
+        run: dotnet tool run DotnetCtrfJsonReporter -p "Tests/RSSVibe.ApiService.Tests/bin/Release/net10.0/TestResults/test-results.trx" -t mstest
+        if: always()
+        
+      - name: Publish Test Report
+        uses: ctrf-io/github-test-reporter@v1
+        with:
+          report-path: './ctrf/ctrf-report.json'
+          github-report: true
+          pull-request-report: true
+          status-check: true
+          status-check-name: 'GitHub Test Reporter Results'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: always()
       
       - name: Upload test results
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: test-results
-          path: Tests/RSSVibe.ApiService.Tests/TestResults/*.trx
+          path: Tests/RSSVibe.ApiService.Tests/bin/Release/net10.0/TestResults/test-results.trx
           retention-days: 7
