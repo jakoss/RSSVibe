@@ -1,6 +1,8 @@
 @page "/feed-analyses"
 @attribute [Authorize]
 @inject IRSSVibeApiClient ApiClient
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 <PageTitle>Feed Analyses - RSSVibe</PageTitle>
 
@@ -42,7 +44,8 @@
                                     Label="Feed URL"
                                     Variant="Variant.Outlined"
                                     Placeholder="https://example.com/feed"
-                                    Disabled="isCreating" />
+                                    Disabled="isCreating"
+                                    Immediate="true" />
                             </MudItem>
                             <MudItem xs="12" md="3">
                                 <MudSelect 
@@ -60,7 +63,7 @@
                                     Variant="Variant.Filled"
                                     Color="Color.Primary"
                                     FullWidth="true"
-                                    Disabled="isCreating || string.IsNullOrWhiteSpace(newAnalysisUrl)">
+                                    Disabled="@(!IsValidUrl())">
                                     @if (isCreating)
                                     {
                                         <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
@@ -98,6 +101,7 @@
                             <MudTh>Warnings</MudTh>
                             <MudTh>Created</MudTh>
                             <MudTh>Completed</MudTh>
+                            <MudTh>Actions</MudTh>
                         </HeaderContent>
                         <RowTemplate>
                             <MudTd DataLabel="Target URL">
@@ -117,6 +121,19 @@
                             <MudTd DataLabel="Completed">
                                 @(context.AnalysisCompletedAt?.LocalDateTime.ToString("g") ?? "-")
                             </MudTd>
+                            <MudTd DataLabel="Actions">
+                                @if (IsCancellable(context.Status))
+                                {
+                                    <MudIconButton 
+                                        Icon="@Icons.Material.Filled.Cancel"
+                                        Color="Color.Error"
+                                        Size="Size.Small"
+                                        OnClick="@(() => CancelAnalysisAsync(context.AnalysisId))"
+                                        Disabled="@(cancellingAnalysisId == context.AnalysisId)"
+                                        title="Cancel analysis">
+                                    </MudIconButton>
+                                }
+                            </MudTd>
                         </RowTemplate>
                     </MudTable>
                 }
@@ -133,6 +150,7 @@
     private string? successMessage;
     private string newAnalysisUrl = string.Empty;
     private string newAnalysisModel = "gpt-4";
+    private Guid? cancellingAnalysisId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -231,5 +249,72 @@
             "failed" => Color.Error,
             _ => Color.Default
         };
+    }
+
+    private bool IsValidUrl()
+    {
+        if (isCreating)
+            return false;
+
+        if (string.IsNullOrWhiteSpace(newAnalysisUrl))
+            return false;
+
+        return Uri.TryCreate(newAnalysisUrl, UriKind.Absolute, out var uri) &&
+               (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+    }
+
+    private bool IsCancellable(string status)
+    {
+        return status.Equals("pending", StringComparison.OrdinalIgnoreCase) ||
+               status.Equals("inProgress", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task CancelAnalysisAsync(Guid analysisId)
+    {
+        // Show confirmation dialog
+        var confirmed = await DialogService.ShowMessageBox(
+            "Cancel Analysis",
+            "Are you sure you want to cancel this feed analysis? This action cannot be undone.",
+            yesText: "Cancel Analysis",
+            cancelText: "Keep Analysis");
+
+        if (confirmed != true)
+            return;
+
+        // Set cancelling state
+        cancellingAnalysisId = analysisId;
+        StateHasChanged();
+
+        try
+        {
+            var deleteResult = await ApiClient.FeedAnalyses.DeleteAsync(analysisId);
+
+            if (deleteResult.IsSuccess)
+            {
+                Snackbar.Add("Analysis cancelled successfully", Severity.Success);
+                // Reload the list
+                await LoadAnalysesAsync();
+            }
+            else
+            {
+                var errorMsg = deleteResult.StatusCode switch
+                {
+                    404 => "Analysis not found (it may have already completed)",
+                    403 => "You don't have permission to cancel this analysis",
+                    422 => "Cannot cancel completed analysis",
+                    _ => deleteResult.ErrorDetail ?? "Failed to cancel analysis"
+                };
+                Snackbar.Add(errorMsg, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error cancelling analysis: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            cancellingAnalysisId = null;
+            StateHasChanged();
+        }
     }
 }

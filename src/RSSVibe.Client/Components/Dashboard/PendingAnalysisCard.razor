@@ -1,5 +1,5 @@
-<MudCard class="analysis-card mud-elevation-1" @onclick="OnClick" style="cursor: pointer;">
-    <MudCardContent>
+<MudCard class="analysis-card mud-elevation-1">
+    <MudCardContent @onclick="OnClick" style="cursor: pointer;">
         <div class="d-flex flex-column gap-2">
             <div>
                 <MudText Typo="Typo.subtitle1" class="font-weight-bold text-truncate">
@@ -26,6 +26,20 @@
             </MudText>
         </div>
     </MudCardContent>
+    
+    @if (IsCancellable)
+    {
+        <MudCardActions class="d-flex justify-end">
+            <MudIconButton 
+                Icon="@Icons.Material.Filled.Cancel"
+                Color="Color.Error"
+                Size="Size.Small"
+                OnClick="@HandleCancelClick"
+                Disabled="@IsCancelling"
+                title="Cancel analysis">
+            </MudIconButton>
+        </MudCardActions>
+    }
 </MudCard>
 
 <style>
@@ -52,6 +66,25 @@
     /// </summary>
     [Parameter]
     public EventCallback OnClick { get; set; }
+
+    /// <summary>
+    /// Callback fired when user requests to cancel the analysis.
+    /// </summary>
+    [Parameter]
+    public EventCallback<Guid> OnCancel { get; set; }
+
+    /// <summary>
+    /// Whether this analysis is currently being cancelled (for loading state).
+    /// </summary>
+    [Parameter]
+    public bool IsCancelling { get; set; }
+
+    /// <summary>
+    /// Check if this analysis can be cancelled (only pending or inProgress).
+    /// </summary>
+    private bool IsCancellable =>
+        Analysis.Status.Equals("pending", StringComparison.OrdinalIgnoreCase) ||
+        Analysis.Status.Equals("inProgress", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Truncate long URLs for display in card.
@@ -87,5 +120,16 @@
             return $"{(int)diff.TotalDays}d ago";
 
         return dateTime.Value.ToString("MMM d, yyyy");
+    }
+
+    /// <summary>
+    /// Handle cancel button click (stop propagation to prevent card navigation).
+    /// </summary>
+    private async Task HandleCancelClick()
+    {
+        if (OnCancel.HasDelegate)
+        {
+            await OnCancel.InvokeAsync(Analysis.AnalysisId);
+        }
     }
 }

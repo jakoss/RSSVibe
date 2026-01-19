@@ -251,7 +251,7 @@ Conditional section displayed only when user has pending feed analyses. Shows li
 ### PendingAnalysisCard
 
 **Component Description:**
-Card displaying pending analysis with URL, status badge, warnings count, and timestamp. Provides quick access to analysis detail page.
+Card displaying pending analysis with URL, status badge, warnings count, timestamp, and cancellation option. Provides quick access to analysis detail page and allows cancellation of pending/in-progress analyses.
 
 **Main Elements:**
 - `<MudCard>` with hover effect
@@ -260,12 +260,17 @@ Card displaying pending analysis with URL, status badge, warnings count, and tim
   - `<AnalysisStatusBadge>` component
   - `<MudChip>` for warnings count (if > 0)
   - `<MudText Typo="Typo.caption">` for timestamp
+- `<MudCardActions>` (conditional - only for "pending" or "inProgress" status):
+  - `<MudIconButton>` for cancellation with `Icons.Material.Filled.Cancel`
 
 **Handled Interactions:**
-- Click on card navigates to `/feed-analyses/{analysisId}`
+- Click on card body navigates to `/feed-analyses/{analysisId}`
+- Click on cancel button (if visible) triggers cancellation with confirmation dialog
+- Cancellation success refreshes dashboard data
 
 **Handled Validation:**
-- None
+- Only show cancel button for analyses with status "pending" or "inProgress"
+- Confirm cancellation with user before API call
 
 **Types:**
 - DTOs: `FeedAnalysisListItemDto`
@@ -273,17 +278,19 @@ Card displaying pending analysis with URL, status badge, warnings count, and tim
 **Props:**
 - `Analysis` (FeedAnalysisListItemDto): Analysis data
 - `OnClick` (EventCallback): Click handler for navigation
+- `OnCancel` (EventCallback<Guid>): Callback fired when analysis is cancelled
+- `IsCancelling` (bool): Whether cancellation is in progress (for loading state)
 
 ---
 
 ### AnalysisStatusBadge
 
 **Component Description:**
-Reusable badge component displaying analysis status with color coding and icon. Supports statuses: Pending, Completed, Failed, Superseded.
+Reusable badge component displaying analysis status with color coding and icon. Supports all analysis statuses: Pending, InProgress, Completed, Failed, Superseded.
 
 **Main Elements:**
 - `<MudChip>` with status-specific styling
-- Status icon (spinner for pending, checkmark for completed, error for failed)
+- Status icon (spinner for pending/inProgress, checkmark for completed, error for failed, superseded icon)
 - Status text
 
 **Handled Interactions:**
@@ -293,12 +300,19 @@ Reusable badge component displaying analysis status with color coding and icon. 
 - None
 
 **Types:**
-- Enums: `FeedAnalysisStatus`
+- Enums: `FeedAnalysisStatus` from `RSSVibe.Contracts.FeedAnalyses`
 
 **Props:**
-- `Status` (string): Analysis status
+- `Status` (string): Analysis status ("pending", "inProgress", "completed", "failed", "superseded")
 - `Size` (Size, default Size.Medium): Chip size
 - `ShowIcon` (bool, default true): Whether to display icon
+
+**Status Color Mapping:**
+- `Pending`: Color.Info (blue)
+- `InProgress`: Color.Warning (orange) with spinner icon
+- `Completed`: Color.Success (green)
+- `Failed`: Color.Error (red)
+- `Superseded`: Color.Default (gray)
 
 ---
 
@@ -430,7 +444,7 @@ public sealed record ListFeedAnalysesResponse(
 public sealed record FeedAnalysisListItemDto(
     Guid AnalysisId,
     string TargetUrl,
-    string Status,                 // "pending", "completed", "failed", "superseded"
+    string Status,                 // "pending", "inProgress", "completed", "failed", "superseded"
     string[] Warnings,
     DateTimeOffset? AnalysisStartedAt,
     DateTimeOffset? AnalysisCompletedAt
@@ -522,6 +536,7 @@ private DashboardData? _dashboardData;
 private bool _isLoading = true;
 private ProblemDetails? _error;
 private CancellationTokenSource? _cts;
+private Guid? _cancellingAnalysisId;  // Track which analysis is being cancelled
 ```
 
 **State Lifecycle**:
@@ -705,7 +720,156 @@ private DashboardStatistics CalculateStatistics(
 }
 ```
 
-## 7. API Integration
+## 7. Analysis Cancellation Flow
+
+### Overview
+Users can cancel feed analyses that are in "pending" or "inProgress" status directly from the dashboard. This provides a quick way to manage analyses without navigating to the detail page.
+
+### Cancellation Logic Implementation
+
+```csharp
+// In Home.razor.cs
+private async Task CancelAnalysisAsync(Guid analysisId)
+{
+    // Show confirmation dialog
+    var parameters = new DialogParameters
+    {
+        ["ContentText"] = "Are you sure you want to cancel this feed analysis? This action cannot be undone.",
+        ["ButtonText"] = "Cancel Analysis",
+        ["Color"] = Color.Error
+    };
+
+    var dialog = await DialogService.ShowAsync<ConfirmDialog>("Cancel Analysis", parameters);
+    var result = await dialog.Result;
+
+    if (result.Canceled)
+        return;
+
+    // Set cancelling state
+    _cancellingAnalysisId = analysisId;
+    StateHasChanged();
+
+    try
+    {
+        var deleteResult = await ApiClient.FeedAnalyses.DeleteAsync(analysisId, _cts?.Token ?? default);
+
+        if (deleteResult.IsSuccess)
+        {
+            Snackbar.Add("Analysis cancelled successfully", Severity.Success);
+            // Refresh dashboard data
+            await LoadDashboardDataAsync();
+        }
+        else
+        {
+            var errorMessage = deleteResult.StatusCode switch
+            {
+                404 => "Analysis not found (it may have already completed)",
+                403 => "You don't have permission to cancel this analysis",
+                422 => "Cannot cancel completed analysis",
+                _ => deleteResult.ErrorDetail ?? "Failed to cancel analysis"
+            };
+            Snackbar.Add(errorMessage, Severity.Error);
+        }
+    }
+    catch (Exception ex)
+    {
+        Snackbar.Add($"Error cancelling analysis: {ex.Message}", Severity.Error);
+    }
+    finally
+    {
+        _cancellingAnalysisId = null;
+        StateHasChanged();
+    }
+}
+```
+
+### PendingAnalysisCard Cancel Button
+
+```csharp
+// In PendingAnalysisCard.razor
+<MudCard OnClick="@(() => OnClick.InvokeAsync())">
+    <MudCardContent>
+        <!-- URL, status, warnings, timestamp -->
+    </MudCardContent>
+    
+    @if (IsCancellable)
+    {
+        <MudCardActions>
+            <MudIconButton 
+                Icon="@Icons.Material.Filled.Cancel"
+                Color="Color.Error"
+                Size="Size.Small"
+                OnClick="@HandleCancelClick"
+                Disabled="@IsCancelling"
+                title="Cancel analysis">
+                @if (IsCancelling)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                }
+            </MudIconButton>
+        </MudCardActions>
+    }
+</MudCard>
+
+@code {
+    [Parameter] public FeedAnalysisListItemDto Analysis { get; set; } = default!;
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public EventCallback<Guid> OnCancel { get; set; }
+    [Parameter] public bool IsCancelling { get; set; }
+
+    private bool IsCancellable => 
+        Analysis.Status.Equals("pending", StringComparison.OrdinalIgnoreCase) ||
+        Analysis.Status.Equals("inProgress", StringComparison.OrdinalIgnoreCase);
+
+    private async Task HandleCancelClick(MouseEventArgs e)
+    {
+        // Stop propagation to prevent card click
+        await OnCancel.InvokeAsync(Analysis.AnalysisId);
+    }
+}
+```
+
+### API Endpoint Usage
+
+**Endpoint**: `DELETE /api/v1/feed-analyses/{analysisId}`
+
+**API Client Method**:
+```csharp
+await ApiClient.FeedAnalyses.DeleteAsync(analysisId, cancellationToken)
+```
+
+**Response Scenarios**:
+- `204 No Content`: Success - analysis cancelled
+- `404 Not Found`: Analysis doesn't exist (may have completed)
+- `403 Forbidden`: User doesn't own this analysis
+- `422 Unprocessable Entity`: Analysis is completed/failed/superseded (cannot cancel)
+- `503 Service Unavailable`: Database or service error
+
+**Business Rules**:
+- Only analyses with status `Pending` or `InProgress` can be cancelled
+- Completed, failed, and superseded analyses are preserved as historical records
+- Cancellation is immediate and cannot be undone
+- Background jobs (if running) will be cancelled when job system is implemented
+
+### User Experience Flow
+
+1. **User sees pending analysis card** with cancel button (only if status is pending/inProgress)
+2. **User clicks cancel button** → Confirmation dialog appears
+3. **User confirms** → Cancel button shows loading spinner
+4. **API call succeeds** → Success snackbar, dashboard refreshes, analysis removed from list
+5. **API call fails** → Error snackbar with specific message, cancel button enabled again
+
+### Error Handling
+
+- **Network errors**: Generic error message with retry suggestion
+- **404 errors**: "Analysis not found (it may have already completed)"
+- **403 errors**: "You don't have permission to cancel this analysis"
+- **422 errors**: "Cannot cancel completed analysis"
+- **Other errors**: Display server-provided error detail or generic fallback
+
+---
+
+## 8. API Integration
 
 **Required API Calls**:
 
@@ -763,6 +927,20 @@ private DashboardStatistics CalculateStatistics(
 - **Purpose**: Fetch recent items for activity feed
 - **Optimization**: Limit to top 3-5 feeds by last parsed date to reduce API calls
 
+### 4. Delete Feed Analysis (Cancel)
+- **Endpoint**: `DELETE /api/v1/feed-analyses/{analysisId}`
+- **API Client**: `ApiClient.FeedAnalyses.DeleteAsync(analysisId)`
+- **Request Parameters**: None (analysisId in URL)
+- **Response Type**: `ApiResultNoData`
+- **Purpose**: Cancel a pending or in-progress feed analysis
+- **Success Response**: `204 No Content`
+- **Error Responses**:
+  - `404 Not Found`: Analysis doesn't exist
+  - `403 Forbidden`: User doesn't own the analysis
+  - `422 Unprocessable Entity`: Cannot cancel (already completed/failed/superseded)
+  - `503 Service Unavailable`: Database/service error
+- **Usage**: Triggered from `PendingAnalysisCard` cancel button after confirmation
+
 **Error Handling**:
 - Network errors: Display `ErrorDisplay` component with retry option
 - 401 Unauthorized: Redirect to `/login` (handled by auth interceptor)
@@ -774,7 +952,7 @@ private DashboardStatistics CalculateStatistics(
 - Server-side caching via API response headers
 - Future enhancement: Use localStorage for dashboard data with 5-minute TTL
 
-## 8. User Interactions
+## 9. User Interactions
 
 ### 1. Initial Page Load
 **Trigger**: User navigates to `/`
@@ -854,7 +1032,30 @@ private DashboardStatistics CalculateStatistics(
 
 **Expected Outcome**: User is guided to create their first feed
 
-## 9. Conditions and Validation
+---
+
+### 9. Cancel Pending Analysis
+**Trigger**: User clicks cancel button on pending/in-progress analysis card
+**Action**:
+- Show confirmation dialog: "Are you sure you want to cancel this analysis?"
+- If confirmed:
+  - Set `_cancellingAnalysisId` to analysis ID (shows loading state)
+  - Call `ApiClient.FeedAnalyses.DeleteAsync(analysisId)`
+  - If successful:
+    - Show success snackbar: "Analysis cancelled"
+    - Refresh dashboard data
+  - If failed:
+    - Show error snackbar with message
+    - Clear `_cancellingAnalysisId`
+
+**Expected Outcome**: Analysis is removed from pending list, dashboard updates
+
+**Error Cases:**
+- 404 Not Found: "Analysis not found (may have already completed)"
+- 403 Forbidden: "You don't have permission to cancel this analysis"
+- 422 Unprocessable Entity: "Cannot cancel completed analysis"
+
+## 10. Conditions and Validation
 
 ### API Response Validation
 
@@ -868,7 +1069,7 @@ private DashboardStatistics CalculateStatistics(
 
 **Analyses Response**:
 - Validate `Items` is not null
-- Validate `Status` is known value ("pending", "completed", "failed", "superseded")
+- Validate `Status` is known value ("pending", "inProgress", "completed", "failed", "superseded")
 - Validate timestamps are in valid range
 
 **Items Response**:
@@ -930,7 +1131,7 @@ private DashboardStatistics CalculateStatistics(
 - **Icon**: `Icons.Material.Filled.Pending` if count > 0, else `Icons.Material.Filled.Done`
 - **Clickable**: Only if count > 0
 
-## 10. Error Handling
+## 11. Error Handling
 
 ### Network Errors
 **Scenario**: API request fails due to network connectivity
@@ -1009,7 +1210,7 @@ private DashboardStatistics CalculateStatistics(
 
 **User Guidance**: No user-facing error (graceful degradation)
 
-## 11. Implementation Steps
+## 12. Implementation Steps
 
 ### Step 1: Create ViewModel Types
 **Location**: `src/RSSVibe.Client/Models/Dashboard/`
@@ -1040,6 +1241,8 @@ private DashboardStatistics CalculateStatistics(
 - Add proper parameter validation
 - Include XML documentation
 - Style with MudBlazor components
+- **PendingAnalysisCard**: Implement cancellation button for pending/inProgress statuses
+- **AnalysisStatusBadge**: Support all 5 status values (pending, inProgress, completed, failed, superseded)
 - Test in isolation (optional for MVP)
 
 ---
@@ -1093,13 +1296,18 @@ private DashboardStatistics CalculateStatistics(
 
 ---
 
-### Step 6: Implement Data Fetching Logic
+### Step 6: Implement Data Fetching and Cancellation Logic
 **Location**: `Home.razor.cs`
 
 **Tasks**:
 - Implement `LoadDashboardDataAsync()` method
 - Implement `FetchRecentItemsAsync()` helper
 - Implement `CalculateStatistics()` helper
+- **Implement `CancelAnalysisAsync(Guid analysisId)` method**:
+  - Show MudBlazor confirmation dialog
+  - Call `ApiClient.FeedAnalyses.DeleteAsync(analysisId, cancellationToken)`
+  - Handle success/error cases with snackbar notifications
+  - Refresh dashboard data on success
 - Handle concurrent API calls safely
 - Implement proper error handling and logging
 
@@ -1203,6 +1411,10 @@ private DashboardStatistics CalculateStatistics(
 - ✅ Dashboard displays statistics correctly
 - ✅ Recent items load and display
 - ✅ Pending analyses section shows when applicable
+- ✅ Cancel button appears only for pending/inProgress analyses
+- ✅ Cancellation requires confirmation and shows loading state
+- ✅ Cancellation success refreshes dashboard
+- ✅ Cancellation errors display user-friendly messages
 - ✅ Quick actions navigate to correct routes
 - ✅ Error handling works for all scenarios
 - ✅ Responsive design works on all breakpoints
@@ -1220,8 +1432,8 @@ private DashboardStatistics CalculateStatistics(
 - [ ] Create `RecentFeedItem.cs` ViewModel
 - [ ] Create `StatisticCard` component
 - [ ] Create `FeedItemCard` component
-- [ ] Create `PendingAnalysisCard` component
-- [ ] Create `AnalysisStatusBadge` component
+- [ ] Create `PendingAnalysisCard` component with cancellation support
+- [ ] Create `AnalysisStatusBadge` component (support all 5 statuses)
 - [ ] Create `StatisticsCardsSection` component
 - [ ] Create `RecentActivitySection` component
 - [ ] Create `RecentFeedItemsList` component
@@ -1232,10 +1444,12 @@ private DashboardStatistics CalculateStatistics(
 - [ ] Create `Home.razor` page component
 - [ ] Implement data fetching logic
 - [ ] Implement statistics calculation
+- [ ] Implement analysis cancellation logic with confirmation
 - [ ] Wire up navigation handlers
 - [ ] Add responsive design breakpoints
 - [ ] Implement empty states
 - [ ] Add error handling
+- [ ] Test cancellation flow (success and error cases)
 - [ ] Test with various data scenarios
 - [ ] Test on multiple devices/screen sizes
 - [ ] Accessibility testing
