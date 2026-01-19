@@ -53,6 +53,8 @@ jobs:
           pull-request-report: true
           status-check: true
           status-check-name: 'GitHub Test Reporter Results'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: always()
       
       - name: Upload test results
