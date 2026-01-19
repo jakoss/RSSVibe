@@ -42,7 +42,7 @@ jobs:
         if: always()
         
       - name: Convert test results to CTRF
-        run: dotnet tool run DotnetCtrfJsonReporter -t "Tests/RSSVibe.ApiService.Tests/bin/Release/net10.0/TestResults/test-results.trx"
+        run: dotnet tool run DotnetCtrfJsonReporter -p "Tests/RSSVibe.ApiService.Tests/bin/Release/net10.0/TestResults/test-results.trx" -t mstest
         if: always()
         
       - name: Publish Test Report
