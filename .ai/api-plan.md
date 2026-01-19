@@ -138,7 +138,7 @@ All authenticated API endpoints are mapped beneath a shared Minimal API group co
 
 #### GET /api/v1/feed-analyses
 - Description: List analyses for current user, supporting dashboards and moderation flows.
-- Query parameters: `status` (`pending|completed|failed|superseded`), `sort` (`createdAt|updatedAt` with suffix `:asc|:desc` default `createdAt:desc`), `skip` (>=0 default 0), `take` (1-50 default 20), `search` (partial target URL).
+- Query parameters: `status` (`pending|inProgress|completed|failed|superseded`), `sort` (`createdAt|updatedAt` with suffix `:asc|:desc` default `createdAt:desc`), `skip` (>=0 default 0), `take` (1-50 default 20), `search` (partial target URL).
 - Response:
 ```json
 {
@@ -261,6 +261,11 @@ All authenticated API endpoints are mapped beneath a shared Minimal API group co
 ```
 - Success: `200 OK`.
 - Errors: `401`, `403`, `404`, `409` (analysis not completed), `503` (preview crawler unavailable).
+
+#### DELETE /api/v1/feed-analyses/{analysisId}
+- Description: Cancel (delete) a pending or in-progress feed analysis. This operation immediately removes the analysis entity and, when background jobs are implemented, cancels any queued or running AI processing. Only analyses in `pending` or `inProgress` status can be deleted. Completed, failed, or superseded analyses are preserved as historical records.
+- Response: `204 No Content`.
+- Errors: `401` (unauthenticated), `403` (user does not own analysis), `404` (analysis not found), `422` (analysis status is `completed`, `failed`, or `superseded` - cannot be cancelled).
 
 ### 2.3 Feeds
 
@@ -651,6 +656,9 @@ All authenticated API endpoints are mapped beneath a shared Minimal API group co
   - Restrict `PreflightChecks` bitmask to known enum values; reject unknown bits with `400`.
   - Persist strongly-typed `PreflightDetails` and `Selectors` matching schema (`list`, `item`, `title`, `link`, optional `published`, optional `summary`).
   - When analysis fails, capture failure reason and expose via response; require explicit rerun.
+  - Analysis status progresses through states: `pending` (queued), `inProgress` (actively analyzing), `completed` (finished successfully), `failed` (errors occurred), or `superseded` (replaced by newer analysis).
+  - DELETE endpoint allows cancellation only for `pending` or `inProgress` analyses; reject deletion of `completed`, `failed`, or `superseded` analyses with `422` to preserve historical records.
+  - When background job integration is complete, DELETE must also cancel queued or running AI processing jobs to avoid resource waste.
 - `Feed`:
   - Ensure `title` length ≤200 characters, `description` ≤2000, `language` ≤16 and matches ISO 639 pattern.
   - Validate schedule: `unit ∈ {hour, day, week}` with `value ≥1` and compute derived minimum interval ≥1 hour; reject combos violating hourly minimum (e.g., `unit=day`, `value=0`).

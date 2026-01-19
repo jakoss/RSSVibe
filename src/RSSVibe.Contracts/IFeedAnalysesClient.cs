@@ -27,4 +27,11 @@ public interface IFeedAnalysesClient
     Task<ApiResult<FeedAnalysisDetailResponse>> GetAsync(
         Guid analysisId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// DELETE /api/v1/feed-analyses/{analysisId} - Delete a feed analysis.
+    /// </summary>
+    Task<ApiResultNoData> DeleteAsync(
+        Guid analysisId,
+        CancellationToken cancellationToken = default);
 }

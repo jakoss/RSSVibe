@@ -19,6 +19,8 @@ Many websites have abandoned traditional RSS support in favor of social media pl
    - Users submit a website URL to initiate feed creation.
    - Pre-flight detection to flag JavaScript-rendered, authentication-required, or paywalled content.
    - AI-driven analysis of the website to propose CSS selectors identifying article containers.
+   - Analysis progresses through distinct states: Pending (queued), InProgress (actively analyzing), Completed (finished successfully), Failed (errors occurred), or Superseded (replaced by newer analysis).
+   - Users can cancel (delete) pending or in-progress analyses that are no longer needed.
    - Review of AI-suggested selectors with side-by-side preview of up to 10 items, where users can edit selectors if necessary.
    - Once approved, the system stores the selected strategy and creates a corresponding RSS feed.
 
@@ -46,6 +48,8 @@ Included in MVP:
    - User authentication and secure login setup via ASP.NET Identity.
    - Website management allowing users to add, view, modify, and delete tracked websites.
    - AI-powered analysis to automatically detect content structures and generate CSS selectors with preview capabilities.
+   - Analysis state tracking (Pending, InProgress, Completed, Failed, Superseded) to provide visibility into processing status.
+   - Ability to cancel (delete) pending or in-progress analyses that are no longer needed.
    - Automated RSS feed generation with basic fields (title, link, pubDate).
    - Configurable update schedules for each website.
    - Standard RSS delivery compatible with popular feed readers.
@@ -82,6 +86,16 @@ Excluded from MVP:
   1. The AI analysis returns a selectable strategy with selectors for list, item, title, link, and (optional) pubDate.
   2. Any errors or warnings from the pre-flight or analysis phase are clearly presented.
   3. A preview of up to 10 extracted items is shown to the user.
+  4. The analysis status is clearly displayed (Pending, InProgress, Completed, Failed).
+
+### US-003a: Cancel Pending or In-Progress Analysis
+- Title: Analysis Cancellation
+- Description: As a user, I want to cancel a pending or in-progress feed analysis that I no longer need so that I can avoid wasting resources and keep my analysis list clean.
+- Acceptance Criteria:
+  1. Users can cancel (delete) analyses with Pending or InProgress status.
+  2. A cancel action is visible in the UI only for analyses that can be cancelled.
+  3. The system confirms cancellation and removes the analysis from the list.
+  4. Analyses with Completed, Failed, or Superseded status cannot be cancelled (they represent historical records).
 
 ### US-004: Edit and Approve AI Suggestions
 - Title: Selector Customization and Approval

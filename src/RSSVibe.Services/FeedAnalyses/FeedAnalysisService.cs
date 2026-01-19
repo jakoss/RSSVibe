@@ -325,4 +325,53 @@ internal sealed class FeedAnalysisService(
 
         return GetFeedAnalysisResult.Succeeded(analysis);
     }
+
+    public async Task<DeleteFeedAnalysisResult> DeleteFeedAnalysisAsync(
+        DeleteFeedAnalysisCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var analysis = await dbContext.FeedAnalyses
+                .FirstOrDefaultAsync(a => a.Id == command.AnalysisId, cancellationToken);
+
+            if (analysis is null)
+            {
+                return DeleteFeedAnalysisResult.Failed(FeedAnalysisError.NotFound);
+            }
+
+            if (analysis.UserId != command.UserId)
+            {
+                logger.LogWarning(
+                    "Unauthorized deletion attempt for analysis {AnalysisId} by user {UserId}. Owner is {OwnerId}",
+                    command.AnalysisId, command.UserId, analysis.UserId);
+                return DeleteFeedAnalysisResult.Failed(FeedAnalysisError.Unauthorized);
+            }
+
+            // Only allow deletion of pending or in-progress analyses
+            if (analysis.AnalysisStatus is not (FeedAnalysisStatus.Pending or FeedAnalysisStatus.InProgress))
+            {
+                return DeleteFeedAnalysisResult.Failed(
+                    FeedAnalysisError.CannotCancelCompletedAnalysis,
+                    "Only pending or in-progress analyses can be deleted. Completed, failed, and superseded analyses are preserved as historical records.");
+            }
+
+            dbContext.FeedAnalyses.Remove(analysis);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            logger.LogInformation(
+                "Feed analysis deleted: {AnalysisId} by user {UserId}",
+                command.AnalysisId, command.UserId);
+
+            // TODO: Cancel background job when job system is implemented
+
+            return DeleteFeedAnalysisResult.Succeeded();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error deleting feed analysis {AnalysisId} for user {UserId}",
+                command.AnalysisId, command.UserId);
+            return DeleteFeedAnalysisResult.Failed(FeedAnalysisError.DatabaseError);
+        }
+    }
 }

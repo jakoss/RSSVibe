@@ -7,7 +7,7 @@
 
 @code {
     /// <summary>
-    /// Analysis status string ("pending", "completed", "failed", "superseded").
+    /// Analysis status string ("pending", "inProgress", "completed", "failed", "superseded").
     /// </summary>
     [Parameter]
     public string Status { get; set; } = string.Empty;
@@ -29,10 +29,11 @@
     /// </summary>
     private Color GetStatusColor() => Status?.ToLowerInvariant() switch
     {
-        "pending" => Color.Warning,
+        "pending" => Color.Info,
+        "inprogress" => Color.Warning,
         "completed" => Color.Success,
         "failed" => Color.Error,
-        "superseded" => Color.Info,
+        "superseded" => Color.Default,
         _ => Color.Default
     };
 
@@ -42,9 +43,10 @@
     private string GetStatusIcon() => Status?.ToLowerInvariant() switch
     {
         "pending" => Icons.Material.Filled.Schedule,
+        "inprogress" => Icons.Material.Filled.HourglassEmpty,
         "completed" => Icons.Material.Filled.CheckCircle,
         "failed" => Icons.Material.Filled.Error,
-        "superseded" => Icons.Material.Filled.Info,
+        "superseded" => Icons.Material.Filled.Archive,
         _ => Icons.Material.Filled.Help
     };
 
@@ -54,6 +56,7 @@
     private string GetStatusText() => Status?.ToLowerInvariant() switch
     {
         "pending" => "Pending",
+        "inprogress" => "In Progress",
         "completed" => "Completed",
         "failed" => "Failed",
         "superseded" => "Superseded",
@@ -66,6 +69,7 @@
     private string GetStatusDescription() => Status?.ToLowerInvariant() switch
     {
         "pending" => "Analysis is pending - awaiting processing",
+        "inprogress" => "Analysis is currently in progress",
         "completed" => "Analysis completed successfully",
         "failed" => "Analysis failed - please review and retry",
         "superseded" => "This analysis has been replaced by a newer one",

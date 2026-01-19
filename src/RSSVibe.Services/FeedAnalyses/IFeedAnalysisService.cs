@@ -29,4 +29,15 @@ public interface IFeedAnalysisService
     Task<GetFeedAnalysisResult> GetFeedAnalysisAsync(
         GetFeedAnalysisCommand command,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Deletes (cancels) a feed analysis. Only analyses in pending or inProgress status can be deleted.
+    /// Completed, failed, or superseded analyses are preserved as historical records.
+    /// </summary>
+    /// <param name="command">Command containing analysis ID and user ID for ownership verification.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result indicating success or specific error.</returns>
+    Task<DeleteFeedAnalysisResult> DeleteFeedAnalysisAsync(
+        DeleteFeedAnalysisCommand command,
+        CancellationToken cancellationToken = default);
 }

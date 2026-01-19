@@ -6,6 +6,7 @@ namespace RSSVibe.Contracts.FeedAnalyses;
 public enum FeedAnalysisStatus
 {
     Pending,
+    InProgress,
     Completed,
     Failed,
     Superseded

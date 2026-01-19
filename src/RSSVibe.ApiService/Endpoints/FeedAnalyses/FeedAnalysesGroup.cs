@@ -18,6 +18,7 @@ public static class FeedAnalysesGroup
         group.MapCreateFeedAnalysisEndpoint();
         group.MapListFeedAnalysesEndpoint();
         group.MapGetFeedAnalysisEndpoint();
+        group.MapDeleteFeedAnalysisEndpoint();
 
         return endpoints;
     }

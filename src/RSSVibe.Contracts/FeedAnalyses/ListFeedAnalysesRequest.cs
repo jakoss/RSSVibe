@@ -18,7 +18,7 @@ public sealed record ListFeedAnalysesRequest(
         {
             RuleFor(x => x.Status)
                 .IsInEnum()
-                .WithMessage("Status must be one of: Pending, Completed, Failed, Superseded");
+                .WithMessage("Status must be one of: Pending, InProgress, Completed, Failed, Superseded");
 
             RuleFor(x => x.Sort)
                 .Must(x => x is null ||

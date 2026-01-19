@@ -6,7 +6,7 @@ This endpoint lists feed analyses for the authenticated user with support for fi
 
 **Key Characteristics**:
 - Returns paginated list of feed analyses scoped to the authenticated user
-- Supports filtering by analysis status (pending, completed, failed, superseded)
+- Supports filtering by analysis status (pending, inProgress, completed, failed, superseded)
 - Allows sorting by creation or update timestamp (ascending/descending)
 - Enables search by partial URL match using normalized URLs
 - Uses read-only queries with `AsNoTracking()` for optimal performance
@@ -24,7 +24,7 @@ This endpoint lists feed analyses for the authenticated user with support for fi
 
 **Optional**:
 - `status` (FeedAnalysisStatus?): Filter by analysis status
-  - Valid values: `Pending`, `Completed`, `Failed`, `Superseded`
+  - Valid values: `Pending`, `InProgress`, `Completed`, `Failed`, `Superseded`
   - Default: null (no filter)
 - `sort` (string?): Sort order for results
   - Valid values: `createdAt:asc`, `createdAt:desc`, `updatedAt:asc`, `updatedAt:desc`
@@ -205,6 +205,7 @@ public sealed class FeedAnalysis : IAuditableEntity
 public enum FeedAnalysisStatus
 {
     Pending,
+    InProgress,
     Completed,
     Failed,
     Superseded
@@ -600,23 +601,31 @@ public static IEndpointRouteBuilder MapFeedAnalysesGroup(this IEndpointRouteBuil
 Test scenarios to implement:
 
 1. **Success Cases**:
-   - `ListFeedAnalyses_WithValidRequest_ShouldReturnPagedResults`
-   - `ListFeedAnalyses_WithStatusFilter_ShouldReturnFilteredResults`
-   - `ListFeedAnalyses_WithSearchTerm_ShouldReturnMatchingResults`
-   - `ListFeedAnalyses_WithSortParameter_ShouldReturnSortedResults`
-   - `ListFeedAnalyses_WithPagination_ShouldReturnCorrectPage`
+    - `ListFeedAnalyses_WithValidRequest_ShouldReturnPagedResults`
+    - `ListFeedAnalyses_WithStatusFilter_ShouldReturnFilteredResults`
+    - `ListFeedAnalyses_WithStatusFilter_Pending_ShouldReturnOnlyPendingAnalyses`
+    - `ListFeedAnalyses_WithStatusFilter_InProgress_ShouldReturnOnlyInProgressAnalyses`
+    - `ListFeedAnalyses_WithStatusFilter_Completed_ShouldReturnOnlyCompletedAnalyses`
+    - `ListFeedAnalyses_WithStatusFilter_Failed_ShouldReturnOnlyFailedAnalyses`
+    - `ListFeedAnalyses_WithStatusFilter_Superseded_ShouldReturnOnlySupersededAnalyses`
+    - `ListFeedAnalyses_WithSearchTerm_ShouldReturnMatchingResults`
+    - `ListFeedAnalyses_WithSortParameter_ShouldReturnSortedResults`
+    - `ListFeedAnalyses_WithPagination_ShouldReturnCorrectPage`
 
 2. **Validation Failures**:
-   - `ListFeedAnalyses_WithInvalidSort_ShouldReturnValidationError`
-   - `ListFeedAnalyses_WithNegativeSkip_ShouldReturnValidationError`
-   - `ListFeedAnalyses_WithTakeOutOfRange_ShouldReturnValidationError`
-   - `ListFeedAnalyses_WithEmptySearch_ShouldReturnValidationError`
+    - `ListFeedAnalyses_WithInvalidSort_ShouldReturnValidationError`
+    - `ListFeedAnalyses_WithNegativeSkip_ShouldReturnValidationError`
+    - `ListFeedAnalyses_WithTakeOutOfRange_ShouldReturnValidationError`
+    - `ListFeedAnalyses_WithEmptySearch_ShouldReturnValidationError`
+    - `ListFeedAnalyses_WithInvalidStatus_ShouldReturnValidationError`
 
 3. **Authentication**:
-   - `ListFeedAnalyses_WithoutAuthentication_ShouldReturnUnauthorized`
-   - `ListFeedAnalyses_WithValidToken_ShouldReturnOnlyUserAnalyses`
+    - `ListFeedAnalyses_WithoutAuthentication_ShouldReturnUnauthorized`
+    - `ListFeedAnalyses_WithValidToken_ShouldReturnOnlyUserAnalyses`
 
-Example test:
+Example tests:
+
+**Test with various status values including InProgress**:
 ```csharp
 [Test]
 public async Task ListFeedAnalyses_WithValidRequest_ShouldReturnPagedResults()
@@ -624,26 +633,54 @@ public async Task ListFeedAnalyses_WithValidRequest_ShouldReturnPagedResults()
     // Arrange - Create authenticated client
     var client = CreateAuthenticatedClient();
 
-    // Create test data
+    // Create test data with mixed statuses
     await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<RssVibeDbContext>();
     
     var userId = Guid.Parse(TestApplication.TestUserId);
-    var analysis = new FeedAnalysis
+    var analyses = new[]
     {
-        Id = Guid.CreateVersion7(),
-        UserId = userId,
-        TargetUrl = "https://test.example.com/feed",
-        NormalizedUrl = "https://test.example.com/feed",
-        AnalysisStatus = FeedAnalysisStatus.Completed,
-        Warnings = ["Test warning"],
-        PreflightDetails = new FeedPreflightDetails(),
-        Selectors = new FeedSelectors(),
-        AnalysisStartedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
-        AnalysisCompletedAt = DateTimeOffset.UtcNow
+        new FeedAnalysis
+        {
+            Id = Guid.CreateVersion7(),
+            UserId = userId,
+            TargetUrl = "https://test1.example.com/feed",
+            NormalizedUrl = "https://test1.example.com/feed",
+            AnalysisStatus = FeedAnalysisStatus.Pending,
+            Warnings = [],
+            PreflightDetails = new FeedPreflightDetails(),
+            Selectors = new FeedSelectors(),
+            CreatedAt = DateTimeOffset.UtcNow
+        },
+        new FeedAnalysis
+        {
+            Id = Guid.CreateVersion7(),
+            UserId = userId,
+            TargetUrl = "https://test2.example.com/feed",
+            NormalizedUrl = "https://test2.example.com/feed",
+            AnalysisStatus = FeedAnalysisStatus.InProgress,
+            Warnings = [],
+            PreflightDetails = new FeedPreflightDetails(),
+            Selectors = new FeedSelectors(),
+            AnalysisStartedAt = DateTimeOffset.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5)
+        },
+        new FeedAnalysis
+        {
+            Id = Guid.CreateVersion7(),
+            UserId = userId,
+            TargetUrl = "https://test3.example.com/feed",
+            NormalizedUrl = "https://test3.example.com/feed",
+            AnalysisStatus = FeedAnalysisStatus.Completed,
+            Warnings = ["Test warning"],
+            PreflightDetails = new FeedPreflightDetails(),
+            Selectors = new FeedSelectors(),
+            AnalysisStartedAt = DateTimeOffset.UtcNow.AddMinutes(-10),
+            AnalysisCompletedAt = DateTimeOffset.UtcNow
+        }
     };
     
-    dbContext.FeedAnalyses.Add(analysis);
+    dbContext.FeedAnalyses.AddRange(analyses);
     await dbContext.SaveChangesAsync();
 
     // Act
@@ -654,8 +691,60 @@ public async Task ListFeedAnalyses_WithValidRequest_ShouldReturnPagedResults()
     
     var data = await response.Content.ReadFromJsonAsync<ListFeedAnalysesResponse>();
     await Assert.That(data).IsNotNull();
+    await Assert.That(data.Items).HasCount().GreaterThanOrEqualTo(3);
+    await Assert.That(data.Paging.TotalCount).IsGreaterThanOrEqualTo(3);
+}
+
+[Test]
+public async Task ListFeedAnalyses_WithInProgressStatusFilter_ShouldReturnOnlyInProgressAnalyses()
+{
+    // Arrange
+    var client = CreateAuthenticatedClient();
+    await using var scope = WebApplicationFactory.Services.CreateAsyncScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<RssVibeDbContext>();
+    
+    var userId = Guid.Parse(TestApplication.TestUserId);
+    
+    // Create analyses with different statuses
+    var inProgressAnalysis = new FeedAnalysis
+    {
+        Id = Guid.CreateVersion7(),
+        UserId = userId,
+        TargetUrl = "https://inprogress.example.com/feed",
+        NormalizedUrl = "https://inprogress.example.com/feed",
+        AnalysisStatus = FeedAnalysisStatus.InProgress,
+        Warnings = [],
+        PreflightDetails = new FeedPreflightDetails(),
+        Selectors = new FeedSelectors(),
+        AnalysisStartedAt = DateTimeOffset.UtcNow,
+        CreatedAt = DateTimeOffset.UtcNow
+    };
+    
+    var completedAnalysis = new FeedAnalysis
+    {
+        Id = Guid.CreateVersion7(),
+        UserId = userId,
+        TargetUrl = "https://completed.example.com/feed",
+        NormalizedUrl = "https://completed.example.com/feed",
+        AnalysisStatus = FeedAnalysisStatus.Completed,
+        Warnings = [],
+        PreflightDetails = new FeedPreflightDetails(),
+        Selectors = new FeedSelectors(),
+        AnalysisCompletedAt = DateTimeOffset.UtcNow,
+        CreatedAt = DateTimeOffset.UtcNow
+    };
+    
+    dbContext.FeedAnalyses.AddRange(inProgressAnalysis, completedAnalysis);
+    await dbContext.SaveChangesAsync();
+
+    // Act
+    var response = await client.GetAsync("/api/v1/feed-analyses?status=InProgress");
+
+    // Assert
+    await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+    var data = await response.Content.ReadFromJsonAsync<ListFeedAnalysesResponse>();
     await Assert.That(data.Items).HasCount().GreaterThanOrEqualTo(1);
-    await Assert.That(data.Paging.TotalCount).IsGreaterThanOrEqualTo(1);
+    await Assert.That(data.Items.All(i => i.Status == "inprogress")).IsTrue();
 }
 ```
 
@@ -680,7 +769,7 @@ bash add_migration.sh AddFeedAnalysisListIndexes
 
 - [ ] Endpoint returns 200 OK with valid request
 - [ ] Endpoint returns correct pagination metadata (skip, take, totalCount, hasMore)
-- [ ] Status filter works correctly (pending, completed, failed, superseded)
+- [ ] Status filter works correctly (pending, inProgress, completed, failed, superseded)
 - [ ] Search filter matches partial URLs correctly
 - [ ] Sorting works for all valid combinations (createdAt/updatedAt, asc/desc)
 - [ ] Pagination returns correct page of results

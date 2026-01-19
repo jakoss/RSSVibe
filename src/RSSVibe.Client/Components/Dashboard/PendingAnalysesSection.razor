@@ -17,7 +17,9 @@
             {
                 <MudItem xs="12" sm="6">
                     <PendingAnalysisCard Analysis="@analysis" 
-                                        OnClick="@(() => NavigateToAnalysis(analysis.AnalysisId))" />
+                                        OnClick="@(() => NavigateToAnalysis(analysis.AnalysisId))"
+                                        OnCancel="@OnCancelAnalysis"
+                                        IsCancelling="@(CancellingAnalysisId == analysis.AnalysisId)" />
                 </MudItem>
             }
         </MudGrid>
@@ -49,6 +51,18 @@
     /// </summary>
     [Parameter]
     public int MaxItems { get; set; } = 5;
+
+    /// <summary>
+    /// Callback fired when user requests to cancel an analysis.
+    /// </summary>
+    [Parameter]
+    public EventCallback<Guid> OnCancelAnalysis { get; set; }
+
+    /// <summary>
+    /// ID of the analysis currently being cancelled (for loading state).
+    /// </summary>
+    [Parameter]
+    public Guid? CancellingAnalysisId { get; set; }
 
     /// <summary>
     /// Navigate to the analysis detail page.

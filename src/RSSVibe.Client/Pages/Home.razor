@@ -33,7 +33,9 @@
                     @if (_dashboardData.Analyses.Any(a => a.Status == "pending" || a.Status == "completed"))
                     {
                         <MudItem xs="12">
-                            <PendingAnalysesSection PendingAnalyses="@_dashboardData.Analyses" />
+                            <PendingAnalysesSection PendingAnalyses="@_dashboardData.Analyses" 
+                                                   OnCancelAnalysis="@CancelAnalysisAsync"
+                                                   CancellingAnalysisId="@_cancellingAnalysisId" />
                         </MudItem>
                     }
 
@@ -57,10 +59,17 @@
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
 
+    [Inject]
+    private IDialogService DialogService { get; set; } = default!;
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; } = default!;
+
     private DashboardData? _dashboardData;
     private bool _isLoading = true;
     private ErrorDisplay.ErrorInfo? _error;
     private CancellationTokenSource? _cts;
+    private Guid? _cancellingAnalysisId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -283,6 +292,55 @@
             case "pending":
                 NavigationManager.NavigateTo("/feed-analyses?status=pending");
                 break;
+        }
+    }
+
+    private async Task CancelAnalysisAsync(Guid analysisId)
+    {
+        // Show confirmation dialog
+        var confirmed = await DialogService.ShowMessageBox(
+            "Cancel Analysis",
+            "Are you sure you want to cancel this feed analysis? This action cannot be undone.",
+            yesText: "Cancel Analysis",
+            cancelText: "Keep Analysis");
+
+        if (confirmed != true)
+            return;
+
+        // Set cancelling state
+        _cancellingAnalysisId = analysisId;
+        StateHasChanged();
+
+        try
+        {
+            var deleteResult = await ApiClient.FeedAnalyses.DeleteAsync(analysisId, _cts?.Token ?? default);
+
+            if (deleteResult.IsSuccess)
+            {
+                Snackbar.Add("Analysis cancelled successfully", Severity.Success);
+                // Refresh dashboard data
+                await LoadDashboardDataAsync();
+            }
+            else
+            {
+                var errorMessage = deleteResult.StatusCode switch
+                {
+                    404 => "Analysis not found (it may have already completed)",
+                    403 => "You don't have permission to cancel this analysis",
+                    422 => "Cannot cancel completed analysis",
+                    _ => deleteResult.ErrorDetail ?? "Failed to cancel analysis"
+                };
+                Snackbar.Add(errorMessage, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error cancelling analysis: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _cancellingAnalysisId = null;
+            StateHasChanged();
         }
     }
 
