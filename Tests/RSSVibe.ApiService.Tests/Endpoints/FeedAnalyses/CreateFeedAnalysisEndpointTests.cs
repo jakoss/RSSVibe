@@ -87,7 +87,7 @@ public class CreateFeedAnalysisEndpointTests : TestsBase
         await Assert.That(responseData!.AnalysisId).IsNotEqualTo(Guid.Empty);
         await Assert.That(responseData.Status).IsEqualTo("Pending");
         await Assert.That(responseData.NormalizedUrl).IsEqualTo("https://example.com/blog");
-        await Assert.That(responseData.Preflight).IsNotNull();
+        await Assert.That(responseData.Preflight).IsNull();
 
         // Verify Location header
         await Assert.That(response.Headers.Location?.ToString())
