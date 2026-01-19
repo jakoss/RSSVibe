@@ -39,9 +39,11 @@ jobs:
           
       - name: Restore tools
         run: dotnet tool restore
+        if: always()
         
       - name: Convert test results to CTRF
         run: dotnet tool run DotnetCtrfJsonReporter -t "Tests/RSSVibe.ApiService.Tests/bin/Release/net10.0/TestResults/test-results.trx"
+        if: always()
         
       - name: Publish Test Report
         uses: ctrf-io/github-test-reporter@v1
