@@ -9,9 +9,13 @@ public sealed record DeleteFeedAnalysisResult
     public FeedAnalysisError? Error { get; init; }
     public string? ErrorDetail { get; init; }
 
-    public static DeleteFeedAnalysisResult Succeeded() =>
-        new() { Success = true };
+    public static DeleteFeedAnalysisResult Succeeded()
+    {
+        return new() { Success = true };
+    }
 
-    public static DeleteFeedAnalysisResult Failed(FeedAnalysisError error, string? detail = null) =>
-        new() { Success = false, Error = error, ErrorDetail = detail };
+    public static DeleteFeedAnalysisResult Failed(FeedAnalysisError error, string? detail = null)
+    {
+        return new() { Success = false, Error = error, ErrorDetail = detail };
+    }
 }

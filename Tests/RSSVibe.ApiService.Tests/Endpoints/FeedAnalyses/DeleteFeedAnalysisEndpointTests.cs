@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using RSSVibe.Contracts;
 using RSSVibe.Data;
 using RSSVibe.Data.Entities;
 using System.Net;
