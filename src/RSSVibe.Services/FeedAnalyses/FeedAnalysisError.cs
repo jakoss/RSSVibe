@@ -48,5 +48,10 @@ public enum FeedAnalysisError
     /// <summary>
     /// The user does not have permission to access this feed analysis.
     /// </summary>
-    Unauthorized
+    Unauthorized,
+
+    /// <summary>
+    /// Cannot delete analysis because it is not in a cancellable state (must be pending or inProgress).
+    /// </summary>
+    CannotCancelCompletedAnalysis
 }

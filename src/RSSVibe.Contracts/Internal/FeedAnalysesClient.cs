@@ -49,6 +49,17 @@ internal sealed class FeedAnalysesClient(HttpClient httpClient) : IFeedAnalysesC
         return await HttpHelper.HandleResponseAsync<FeedAnalysisDetailResponse>(response, cancellationToken);
     }
 
+    public async Task<ApiResultNoData> DeleteAsync(
+        Guid analysisId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.DeleteAsync(
+            $"{BaseRoute}/{analysisId}",
+            cancellationToken);
+
+        return await HttpHelper.HandleResponseNoDataAsync(response, cancellationToken);
+    }
+
     private static string BuildQueryString(params (string key, string? value)[] parameters)
     {
         var validParams = parameters
