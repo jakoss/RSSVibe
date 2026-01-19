@@ -5,8 +5,7 @@ namespace RSSVibe.ApiService.Tests.Infrastructure;
 
 public class PostgresTestContainer : IAsyncInitializer, IAsyncDisposable
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
-        .WithImage("library/postgres:18")
+    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("library/postgres:18")
         .Build();
 
     public string ConnectionString => _container.GetConnectionString();
