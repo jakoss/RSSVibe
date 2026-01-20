@@ -76,9 +76,6 @@ RSSVibe provides Docker images for all deployable components via GitHub Containe
 ### Quick Start with Docker Compose
 
 ```bash
-# Set your GitHub username
-export GITHUB_USERNAME=yourusername
-
 # Start the full stack
 docker-compose up -d
 
