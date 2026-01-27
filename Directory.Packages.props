@@ -49,6 +49,6 @@
     <PackageVersion Include="TickerQ.Dashboard" Version="10.0.2" />
     <PackageVersion Include="TickerQ.EntityFrameworkCore" Version="10.0.2" />
     <PackageVersion Include="TickerQ.Instrumentation.OpenTelemetry" Version="10.0.2" />
-    <PackageVersion Include="TUnit" Version="1.12.3" />
+    <PackageVersion Include="TUnit" Version="1.12.65" />
   </ItemGroup>
 </Project>
